@@ -33,7 +33,8 @@ dev: generate ## Run in development mode with auto-reload (requires air)
 
 build: generate ## Build the application
 	@echo "Building application..."
-	go build -o bin/blog main.go
+	@VERSION=$$(git rev-parse --short HEAD 2>/dev/null || echo "dev"); \
+	go build -ldflags "-X jordanmurray.xyz/blog/version.Version=$$VERSION" -o bin/blog main.go
 	@echo "Binary created at bin/blog"
 
 clean: ## Clean generated files and build artifacts

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"jordanmurray.xyz/blog/handlers"
+	"jordanmurray.xyz/blog/version"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 	http.HandleFunc("/blog/", handlers.HandleBlogPost)
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Server starting on http://localhost%s", addr)
+	log.Printf("Server starting on http://localhost%s (version: %s)", addr, version.Version)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
 	}

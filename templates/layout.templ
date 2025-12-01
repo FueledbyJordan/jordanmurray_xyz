@@ -3,6 +3,8 @@ package templates
 import (
 	"fmt"
 	"time"
+
+	"jordanmurray.xyz/blog/version"
 )
 
 templ Layout(title string) {
@@ -84,6 +86,7 @@ templ Footer() {
 		<aside>
 			<p class="font-bold">Jordan Murray</p>
 			<p>Copyright © { templ.EscapeString(fmt.Sprintf("%d", time.Now().Year())) }</p>
+			<p class="text-sm text-base-content/50">{ version.Version }</p>
 		</aside>
 	</footer>
 }

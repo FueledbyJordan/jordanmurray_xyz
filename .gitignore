@@ -6,6 +6,7 @@
 *.dylib
 bin/
 dist/
+result
 
 # Test binary
 *.test
@@ -17,7 +18,7 @@ dist/
 go.work
 
 # Dependency directories
-vendor/
+# vendor/ - Keep vendor for Nix builds
 
 # IDE
 .idea/

@@ -75,6 +75,10 @@
             ${templ}/bin/templ generate
           '';
 
+          ldflags = [
+            "-X jordanmurray.xyz/blog/version.Version=${self.rev or self.dirtyRev or "dev"}"
+          ];
+
           meta = with pkgs.lib; {
             description = "Jordan Murray's blog built with Go, Templ, Datastar, and DaisyUI";
             homepage = "https://jordanmurray.xyz";
