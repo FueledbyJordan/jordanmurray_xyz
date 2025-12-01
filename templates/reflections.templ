@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-templ BlogList(posts []models.Post) {
-	@Layout("Blog") {
-		<h1 class="text-4xl font-bold mb-8">Blog Posts</h1>
+templ Reflections(posts []models.Post) {
+	@Layout("Reflections") {
+		<h1 class="text-4xl font-bold mb-8">Reflections</h1>
 		<div class="grid grid-cols-1 gap-6">
 			for _, post := range posts {
 				@PostCard(post)
@@ -20,7 +20,7 @@ templ PostCard(post models.Post) {
 	<div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
 		<div class="card-body">
 			<h2 class="card-title">
-				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="hover:text-primary">
+				<a href={ templ.SafeURL(fmt.Sprintf("/reflections/%s", post.Slug)) } class="hover:text-primary">
 					{ post.Title }
 				</a>
 			</h2>
@@ -34,13 +34,13 @@ templ PostCard(post models.Post) {
 				}
 			</div>
 			<div class="card-actions justify-end">
-				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="btn btn-primary btn-sm">Read More</a>
+				<a href={ templ.SafeURL(fmt.Sprintf("/reflections/%s", post.Slug)) } class="btn btn-primary btn-sm">Read More</a>
 			</div>
 		</div>
 	</div>
 }
 
-templ BlogPost(post models.Post) {
+templ Reflection(post models.Post) {
 	@Layout(post.Title) {
 		<article class="prose prose-lg max-w-4xl mx-auto">
 			<h1>{ post.Title }</h1>
@@ -57,7 +57,7 @@ templ BlogPost(post models.Post) {
 			</div>
 		</article>
 		<div class="mt-12 text-center">
-			<a href="/blog" class="btn btn-outline">Back to Blog</a>
+			<a href="/reflections" class="btn btn-outline">back to reflections</a>
 		</div>
 	}
 }

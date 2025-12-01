@@ -50,7 +50,7 @@
           ];
 
           shellHook = ''
-            echo "🚀 Blog development environment loaded!"
+            echo "🚀 development environment loaded!"
             echo ""
             echo "Available commands:"
             echo "  make install  - Install dependencies"

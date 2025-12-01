@@ -3,11 +3,10 @@ package templates
 import "jordanmurray.xyz/site/models"
 
 templ Home(recentPosts []models.Post) {
-	@MinimalLayout("Jordan Murray") {
-		<div class="max-w-2xl mx-auto px-6 py-16 md:py-24">
-			<!-- Hero Section -->
-			<div class="mb-8">
-				<div class="flex w-full justify-between mb-8">
+	@Layout("Jordan Murray") {
+		<div class="max-w-2xl mx-auto px-6">
+			<div class="mb-4">
+				<div class="flex w-full justify-between mb-4">
 				  <div>
 						<h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
 							# README.md
@@ -23,10 +22,16 @@ templ Home(recentPosts []models.Post) {
 					</div>
 				</div>
 
-				<div class="prose prose-lg max-w-none text-base-content/80 space-y-4">
-					<p class="text-xl leading-relaxed">
-					  I love building systems in the 0 -> 1 stage, tightening feedback cycles through the application of technology,
-						and triaging and understanding problems.  I'm currently at <a href="https://wealthfront.com"><span class="highlight-wealthfront">Wealthfront</span></a> where I
+				<div class="text-xl prose prose-lg max-w-none text-base-content/80 space-y-4">
+					<p class="leading-relaxed">
+					  I enjoy:
+						<ul class="text-lg ml-8 pb-4 text-m list-disc leading-relaxed">
+							<li>building in the 0 → 1 stage</li>
+							<li>tightening feedback cycles through the application of technology</li>
+							<li>triaging and understanding problems with fellow engineers</li>
+						</ul>
+
+						I'm currently at <a href="https://wealthfront.com"><span class="highlight-wealthfront">Wealthfront</span></a> where I
 						focus on site reliability, devops, and technical guidance to the broader organization.
 					</p>
 					<p class="text-xl leading-relaxed">
@@ -37,43 +42,36 @@ templ Home(recentPosts []models.Post) {
 					</p>
 					<p class="text-xl leading-relaxed">
 					  Outside of tech:
-						  <ul class="text-l list-disc leading-relaxed">
-							  <li>I am a husband and father 🐻</li>
-							  <li>I have spent thousands of hours training in various grappling arts: brazilian jiu jitsu, judo, and folkstyle wrestling.</li>
-							  <li>I am always working on some house project 🔨</li>
+						  <ul class="text-lg ml-8 list-disc leading-relaxed">
+							  <li>I am a husband and father</li>
+							  <li>I always seem to have a home project going on</li>
+							  <li>I have spent a few thousand hours practicing various grappling arts such as brazilian jiu jitsu, judo, and folkstyle wrestling</li>
 							</ul>
 					</p>
 				</div>
 			</div>
 
-			<!-- Recent Writing -->
 			if len(recentPosts) > 0 {
-				<div class="mb-16">
-					<h2 class="text-2xl font-bold mb-8">Musings</h2>
+				<div>
+					<h2 class="text-2xl font-bold mt-8">Reflections</h2>
 					<div class="space-y-6">
 						for _, post := range recentPosts {
 							@MinimalPostLink(post)
 						}
 					</div>
 					<div class="mt-8">
-						<a href="/blog" class="text-base-content/60 hover:text-base-content transition-colors">
-							View all posts →
+						<a href="/reflections" class="text-base-content/60 hover:text-base-content transition-colors">
+							View all reflections →
 						</a>
 					</div>
 				</div>
 			}
-
-			<!-- Footer Links -->
-			<div class="flex gap-6 text-base-content/60">
-				<a href="https://github.com/fueledbyjordan" class="hover:text-base-content transition-colors">GitHub</a>
-				<a href="mailto:jordan@jordanmurray.xyz" class="hover:text-base-content transition-colors">Email</a>
-			</div>
 		</div>
 	}
 }
 
 templ MinimalPostLink(post models.Post) {
-	<a href={ templ.SafeURL("/blog/" + post.Slug) } class="block group">
+	<a href={ templ.SafeURL("/reflections/" + post.Slug) } class="block group">
 		<div class="flex justify-between items-baseline gap-4">
 			<h3 class="text-lg font-medium group-hover:text-primary transition-colors">
 				{ post.Title }

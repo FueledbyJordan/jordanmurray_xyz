@@ -21,8 +21,8 @@ func main() {
 
 	// Routes
 	http.HandleFunc("/", handlers.HandleHome)
-	http.HandleFunc("/blog", handlers.HandleBlogList)
-	http.HandleFunc("/blog/", handlers.HandleBlogPost)
+	http.HandleFunc("/reflections", handlers.HandleReflections)
+	http.HandleFunc("/reflections/", handlers.HandleReflection)
 
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("Server starting on http://localhost%s", addr)

@@ -24,20 +24,20 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleBlogList(w http.ResponseWriter, r *http.Request) {
+func HandleReflections(w http.ResponseWriter, r *http.Request) {
 	posts := models.GetAllPosts()
-	component := templates.BlogList(posts)
+	component := templates.Reflections(posts)
 
 	if err := component.Render(r.Context(), w); err != nil {
-		log.Printf("Error rendering blog list: %v", err)
+		log.Printf("Error rendering reflections list: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
 
-func HandleBlogPost(w http.ResponseWriter, r *http.Request) {
-	slug := strings.TrimPrefix(r.URL.Path, "/blog/")
+func HandleReflection(w http.ResponseWriter, r *http.Request) {
+	slug := strings.TrimPrefix(r.URL.Path, "/reflections/")
 	if slug == "" {
-		http.Redirect(w, r, "/blog", http.StatusSeeOther)
+		http.Redirect(w, r, "/reflections", http.StatusSeeOther)
 		return
 	}
 
@@ -47,10 +47,10 @@ func HandleBlogPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	component := templates.BlogPost(*post)
+	component := templates.Reflection(*post)
 
 	if err := component.Render(r.Context(), w); err != nil {
-		log.Printf("Error rendering blog post: %v", err)
+		log.Printf("Error rendering reflection: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
