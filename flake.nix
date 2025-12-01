@@ -1,5 +1,5 @@
 {
-  description = "Jordan Murray's Blog - Go, Templ, Datastar, DaisyUI";
+  description = "jordanmurray.xyz";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -46,7 +46,7 @@
             go
             templ
             gnumake
-            air # Optional: for hot reloading
+            air
           ];
 
           shellHook = ''
@@ -58,13 +58,11 @@
             echo "  make watch    - Watch templates for changes"
             echo "  make dev      - Run with hot reload (using air)"
             echo "  make build    - Build production binary"
-            echo ""
-            echo "Tech stack: Go + Templ + Datastar + DaisyUI"
           '';
         };
 
         packages.default = pkgs.buildGoModule {
-          pname = "jordanmurray-blog";
+          pname = "jordanmurray-xyz";
           version = "0.1.0";
           src = ./.;
           vendorHash = null;
@@ -76,14 +74,15 @@
           '';
 
           ldflags = [
-            "-X jordanmurray.xyz/blog/version.Version=${self.rev or self.dirtyRev or "dev"}"
+            "-X jordanmurray.xyz/version.NixSHA=${self.rev or self.dirtyRev or "dev"}"
+            "-X jordanmurray.xyz/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
           ];
 
           meta = with pkgs.lib; {
-            description = "Jordan Murray's blog built with Go, Templ, Datastar, and DaisyUI";
+            description = "site containing jordanmurray.xyz";
             homepage = "https://jordanmurray.xyz";
             license = licenses.mit;
-            mainProgram = "blog";
+            mainProgram = "jordanmurray_xyz";
           };
         };
       }

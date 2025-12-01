@@ -86,7 +86,19 @@ templ Footer() {
 		<aside>
 			<p class="font-bold">Jordan Murray</p>
 			<p>Copyright © { templ.EscapeString(fmt.Sprintf("%d", time.Now().Year())) }</p>
-			<p class="text-sm text-base-content/50">{ version.Version }</p>
+			<p class="text-sm text-base-content/50">
+				if version.GitSHA != "unknown" {
+					{ fmt.Sprintf("git: %s", version.GitSHA[:7]) }
+				} else {
+					{ "git: unknown" }
+				}
+				{ " | " }
+				if version.NixSHA!= "dev" {
+					{ fmt.Sprintf("nix: %s", version.NixSHA[:7]) }
+				} else {
+					{ "nix: dev" }
+				}
+			</p>
 		</aside>
 	</footer>
 }
