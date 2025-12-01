@@ -74,14 +74,14 @@
           '';
 
           ldflags = [
-            "-X jordanmurray.xyz/blog/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
+            "-X jordanmurray.xyz/site/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
           ];
 
           meta = with pkgs.lib; {
             description = "site containing jordanmurray.xyz";
             homepage = "https://jordanmurray.xyz";
             license = licenses.mit;
-            mainProgram = "jordanmurray_xyz";
+            mainProgram = "site";
           };
         };
       }

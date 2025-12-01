@@ -1,4 +1,4 @@
-module jordanmurray.xyz/blog
+module jordanmurray.xyz/site
 
 go 1.25.1
 

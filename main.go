@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"jordanmurray.xyz/blog/handlers"
+	"jordanmurray.xyz/site/handlers"
 )
 
 func main() {

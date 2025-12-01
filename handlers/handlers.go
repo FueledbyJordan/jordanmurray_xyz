@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"jordanmurray.xyz/blog/models"
-	"jordanmurray.xyz/blog/templates"
+	"jordanmurray.xyz/site/models"
+	"jordanmurray.xyz/site/templates"
 )
 
 func HandleHome(w http.ResponseWriter, r *http.Request) {
