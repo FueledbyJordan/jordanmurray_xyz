@@ -52,12 +52,7 @@
           shellHook = ''
             echo "🚀 development environment loaded!"
             echo ""
-            echo "Available commands:"
-            echo "  make install  - Install dependencies"
-            echo "  make run      - Generate templates and start server"
-            echo "  make watch    - Watch templates for changes"
-            echo "  make dev      - Run with hot reload (using air)"
-            echo "  make build    - Build production binary"
+            echo "`make help`"
           '';
         };
 
