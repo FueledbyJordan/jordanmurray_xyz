@@ -5,6 +5,13 @@
   border-radius: .1em;
 }
 
+.highlight-wealthfront:hover {
+  color: #FFFFFF;
+  background-color: #9789f8;
+  padding: .1em .2em;
+  border-radius: .1em;
+}
+
 .highlight-boeing{
   color: #FFFFFF;
   background-color: #0033A1;
