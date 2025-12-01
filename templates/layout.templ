@@ -88,9 +88,9 @@ templ Footer() {
 			<p>Copyright © { templ.EscapeString(fmt.Sprintf("%d", time.Now().Year())) }</p>
 			<p class="text-sm text-base-content/50">
 				if version.GitSHA != "unknown" {
-					{ fmt.Sprintf("git: %s", version.GitSHA[:7]) }
+					Site version: <a href={ templ.SafeURL(fmt.Sprintf("https://github.com/fueledbyjordan/site/commit/%s", version.GitSHA)) } class="hover:underline">{ version.GitSHA[:7] }</a>
 				} else {
-					{ "git: unknown" }
+					git: unknown
 				}
 			</p>
 		</aside>
