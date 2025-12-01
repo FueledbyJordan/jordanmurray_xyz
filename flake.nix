@@ -74,7 +74,6 @@
           '';
 
           ldflags = [
-            "-X jordanmurray.xyz/blog/version.NixSHA=${self.rev or self.dirtyRev or "dev"}"
             "-X jordanmurray.xyz/blog/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
           ];
 

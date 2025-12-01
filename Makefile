@@ -34,8 +34,7 @@ dev: generate ## Run in development mode with auto-reload (requires air)
 build: generate ## Build the application
 	@echo "Building application..."
 	@GITSHA=$$(git rev-parse HEAD 2>/dev/null || echo "unknown"); \
-	@NIXSHA=$$(git rev-parse --short HEAD 2>/dev/null || echo "dev"); \
-	go build -ldflags "-X jordanmurray.xyz/blog/version.NixSHA=$$NIXSHA-X jordanmurray.xyz/blog/version.GitSHA=$$GITSHA" -o bin/jordanmurray_xyz main.go
+	go build -ldflags "-X jordanmurray.xyz/blog/version.GitSHA=$$GITSHA" -o bin/jordanmurray_xyz main.go
 	@echo "Binary created at bin/jordanmurray_xyz"
 
 clean: ## Clean generated files and build artifacts

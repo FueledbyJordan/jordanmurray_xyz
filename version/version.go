@@ -1,6 +1,4 @@
 package version
 
-var (
-	GitSHA = "unknown"
-	NixSHA = "dev"
-)
+// GitSHA will be set at build time via -ldflags
+var GitSHA = "unknown"

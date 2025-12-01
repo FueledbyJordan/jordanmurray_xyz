@@ -92,12 +92,6 @@ templ Footer() {
 				} else {
 					{ "git: unknown" }
 				}
-				{ " | " }
-				if version.NixSHA!= "dev" {
-					{ fmt.Sprintf("nix: %s", version.NixSHA[:7]) }
-				} else {
-					{ "nix: dev" }
-				}
 			</p>
 		</aside>
 	</footer>
