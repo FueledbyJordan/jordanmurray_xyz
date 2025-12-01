@@ -74,8 +74,8 @@
           '';
 
           ldflags = [
-            "-X jordanmurray.xyz/version.NixSHA=${self.rev or self.dirtyRev or "dev"}"
-            "-X jordanmurray.xyz/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
+            "-X jordanmurray.xyz/blog/version.NixSHA=${self.rev or self.dirtyRev or "dev"}"
+            "-X jordanmurray.xyz/blog/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
           ];
 
           meta = with pkgs.lib; {
