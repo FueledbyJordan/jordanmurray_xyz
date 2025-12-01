@@ -1,0 +1,53 @@
+package templates
+
+import (
+	"fmt"
+	"time"
+)
+
+templ Layout(title string) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="light">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title } - Jordan Murray</title>
+			<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css"/>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script type="module" src="https://cdn.jsdelivr.net/npm/@sudodevnull/datastar"></script>
+		</head>
+		<body class="min-h-screen bg-base-100">
+			@Header()
+			<main class="container mx-auto px-4 py-8">
+				{ children... }
+			</main>
+			@Footer()
+		</body>
+	</html>
+}
+
+templ Header() {
+	<header class="navbar bg-base-200 shadow-lg mb-8">
+		<div class="container mx-auto">
+			<div class="flex-1">
+				<a href="/" class="btn btn-ghost text-xl">Jordan Murray</a>
+			</div>
+			<div class="flex-none">
+				<ul class="menu menu-horizontal px-1">
+					<li><a href="/">Home</a></li>
+					<li><a href="/blog">Blog</a></li>
+				</ul>
+			</div>
+		</div>
+	</header>
+}
+
+templ Footer() {
+	<footer class="footer footer-center p-10 bg-base-200 text-base-content mt-16">
+		<aside>
+			<p class="font-bold">Jordan Murray</p>
+			<p>Built with Go, Templ, Datastar, and DaisyUI</p>
+			<p>Copyright © { templ.EscapeString(fmt.Sprintf("%d", time.Now().Year())) }</p>
+		</aside>
+	</footer>
+}

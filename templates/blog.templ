@@ -1,0 +1,63 @@
+package templates
+
+import (
+	"jordanmurray.xyz/blog/models"
+	"fmt"
+)
+
+templ BlogList(posts []models.Post) {
+	@Layout("Blog") {
+		<h1 class="text-4xl font-bold mb-8">Blog Posts</h1>
+		<div class="grid grid-cols-1 gap-6">
+			for _, post := range posts {
+				@PostCard(post)
+			}
+		</div>
+	}
+}
+
+templ PostCard(post models.Post) {
+	<div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+		<div class="card-body">
+			<h2 class="card-title">
+				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="hover:text-primary">
+					{ post.Title }
+				</a>
+			</h2>
+			<p class="text-sm text-base-content/60">
+				By { post.Author } on { post.PublishedAt.Format("January 2, 2006") }
+			</p>
+			<p>{ post.Excerpt }</p>
+			<div class="flex gap-2 flex-wrap">
+				for _, tag := range post.Tags {
+					<span class="badge badge-primary badge-outline">{ tag }</span>
+				}
+			</div>
+			<div class="card-actions justify-end">
+				<a href={ templ.SafeURL(fmt.Sprintf("/blog/%s", post.Slug)) } class="btn btn-primary btn-sm">Read More</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ BlogPost(post models.Post) {
+	@Layout(post.Title) {
+		<article class="prose prose-lg max-w-4xl mx-auto">
+			<h1>{ post.Title }</h1>
+			<div class="text-sm text-base-content/60 mb-4">
+				By { post.Author } on { post.PublishedAt.Format("January 2, 2006") }
+			</div>
+			<div class="flex gap-2 flex-wrap mb-8">
+				for _, tag := range post.Tags {
+					<span class="badge badge-primary badge-outline">{ tag }</span>
+				}
+			</div>
+			<div class="mt-8">
+				{ post.Content }
+			</div>
+		</article>
+		<div class="mt-12 text-center">
+			<a href="/blog" class="btn btn-outline">Back to Blog</a>
+		</div>
+	}
+}

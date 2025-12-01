@@ -1,0 +1,28 @@
+package templates
+
+import "jordanmurray.xyz/blog/models"
+
+templ Home(recentPosts []models.Post) {
+	@Layout("Home") {
+		<div class="hero min-h-[60vh] bg-base-200 rounded-lg">
+			<div class="hero-content text-center">
+				<div class="max-w-md">
+					<h1 class="text-5xl font-bold">Welcome!</h1>
+					<p class="py-6">
+						A modern blog built with Go, Templ, Datastar, and DaisyUI.
+						Explore my thoughts on software development, technology, and more.
+					</p>
+					<a href="/blog" class="btn btn-primary">Read the Blog</a>
+				</div>
+			</div>
+		</div>
+		<div class="mt-12">
+			<h2 class="text-3xl font-bold mb-6">Recent Posts</h2>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				for _, post := range recentPosts {
+					@PostCard(post)
+				}
+			</div>
+		</div>
+	}
+}

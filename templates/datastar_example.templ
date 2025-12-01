@@ -1,0 +1,53 @@
+package templates
+
+// Example component demonstrating Datastar reactivity
+templ DatastarExample() {
+	@Layout("Datastar Example") {
+		<div class="max-w-2xl mx-auto">
+			<h1 class="text-4xl font-bold mb-8">Datastar Interactive Example</h1>
+
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body">
+					<h2 class="card-title">Counter Example</h2>
+					<div data-store="{count: 0}">
+						<div class="stat bg-base-200 rounded-lg">
+							<div class="stat-title">Current Count</div>
+							<div class="stat-value" data-text="$count"></div>
+						</div>
+						<div class="card-actions justify-end mt-4">
+							<button class="btn btn-primary" data-on-click="$count++">Increment</button>
+							<button class="btn btn-secondary" data-on-click="$count--">Decrement</button>
+							<button class="btn btn-accent" data-on-click="$count=0">Reset</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="card bg-base-100 shadow-xl mt-8">
+				<div class="card-body">
+					<h2 class="card-title">Form Example</h2>
+					<div data-store="{name: '', message: ''}">
+						<div class="form-control">
+							<label class="label">
+								<span class="label-text">Your Name</span>
+							</label>
+							<input
+								type="text"
+								placeholder="Enter your name"
+								class="input input-bordered"
+								data-model="name"
+							/>
+						</div>
+						<div class="mt-4 p-4 bg-base-200 rounded-lg" data-show="$name">
+							<p>Hello, <span data-text="$name"></span>!</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mt-8">
+				<a href="/" class="btn btn-outline">Back to Home</a>
+			</div>
+		</div>
+	}
+}
