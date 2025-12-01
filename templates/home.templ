@@ -6,29 +6,38 @@ templ Home(recentPosts []models.Post) {
 	@MinimalLayout("Jordan Murray") {
 		<div class="max-w-2xl mx-auto px-6 py-16 md:py-24">
 			<!-- Hero Section -->
-			<div class="mb-16">
-				<h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-					My README 👋
-				</h1>
+			<div class="mb-8">
+				<div class="flex w-full justify-between mb-8">
+				  <div>
+						<h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+							# README.md
+						</h1>
+						<p class="text-xl leading-relaxed prose prose-lg max-w-none text-base-content/80 space-y-4">
+							My name is Jordan and I am a software engineer from North Carolina.
+						</p>
+					</div>
+					<div class="avatar">
+					  <div class="size-36 rounded-full">
+					    <img src="./static/assets/profile.jpg" />
+					  </div>
+					</div>
+				</div>
+
 				<div class="prose prose-lg max-w-none text-base-content/80 space-y-4">
 					<p class="text-xl leading-relaxed">
-						My name is Jordan and I am a software engineer from North Carolina.
-					</p>
-					<p class="text-xl leading-relaxed">
-					  I love building systems in the 0 -> 1 stage, tightening feedback cycles through technology,
-						and triaging and understanding issues.  I'm currently at <a href="https://wealthfront.com"><span class="highlight-wealthfront">Wealthfront</span></a> where I
+					  I love building systems in the 0 -> 1 stage, tightening feedback cycles through the application of technology,
+						and triaging and understanding problems.  I'm currently at <a href="https://wealthfront.com"><span class="highlight-wealthfront">Wealthfront</span></a> where I
 						focus on site reliability, devops, and technical guidance to the broader organization.
 					</p>
 					<p class="text-xl leading-relaxed">
-					  I started my career in the defense industry.  I spent a few years at <span class="highlight-boeing">Boeing</span> where I
-						worked on real time flight software, simulations, and firmware development.
-
-						I spent a few years at <span class="highlight-lockheed">Lockheed Martin</span> where I focused on simulations, devops, and modernizing
+					  I started my career in the defense industry at <span class="highlight-boeing">Boeing</span> where I
+						worked on real time flight software, simulators, and firmware development for a couple of years.
+						I then spent a few years at <span class="highlight-lockheed">Lockheed Martin</span> where I focused on simulations, devops, and modernizing
 						the software engineering culture.
 					</p>
 					<p class="text-xl leading-relaxed">
 					  Outside of tech:
-						  <ul>
+						  <ul class="text-l list-disc leading-relaxed">
 							  <li>I am a husband and father 🐻</li>
 							  <li>I have spent thousands of hours training in various grappling arts: brazilian jiu jitsu, judo, and folkstyle wrestling.</li>
 							  <li>I am always working on some house project 🔨</li>
@@ -40,7 +49,7 @@ templ Home(recentPosts []models.Post) {
 			<!-- Recent Writing -->
 			if len(recentPosts) > 0 {
 				<div class="mb-16">
-					<h2 class="text-2xl font-bold mb-8">Recent Writing</h2>
+					<h2 class="text-2xl font-bold mb-8">Musings</h2>
 					<div class="space-y-6">
 						for _, post := range recentPosts {
 							@MinimalPostLink(post)
