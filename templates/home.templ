@@ -50,38 +50,6 @@ templ Home(recentPosts []models.Post) {
 					</p>
 				</div>
 			</div>
-
-			if len(recentPosts) > 0 {
-				<div>
-					<h2 class="text-2xl font-bold mt-8">Reflections</h2>
-					<div class="space-y-6">
-						for _, post := range recentPosts {
-							@MinimalPostLink(post)
-						}
-					</div>
-					<div class="mt-8">
-						<a href="/reflections" class="text-base-content/60 hover:text-base-content transition-colors">
-							View all reflections →
-						</a>
-					</div>
-				</div>
-			}
 		</div>
 	}
-}
-
-templ MinimalPostLink(post models.Post) {
-	<a href={ templ.SafeURL("/reflections/" + post.Slug) } class="block group">
-		<div class="flex justify-between items-baseline gap-4">
-			<h3 class="text-lg font-medium group-hover:text-primary transition-colors">
-				{ post.Title }
-			</h3>
-			<span class="text-sm text-base-content/50 whitespace-nowrap">
-				{ post.PublishedAt.Format("Jan 2, 2006") }
-			</span>
-		</div>
-		<p class="text-base-content/60 mt-2">
-			{ post.Excerpt }
-		</p>
-	</a>
 }
