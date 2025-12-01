@@ -3,26 +3,78 @@ package templates
 import "jordanmurray.xyz/blog/models"
 
 templ Home(recentPosts []models.Post) {
-	@Layout("Home") {
-		<div class="hero min-h-[60vh] bg-base-200 rounded-lg">
-			<div class="hero-content text-center">
-				<div class="max-w-md">
-					<h1 class="text-5xl font-bold">Welcome!</h1>
-					<p class="py-6">
-						A modern blog built with Go, Templ, Datastar, and DaisyUI.
-						Explore my thoughts on software development, technology, and more.
+	@MinimalLayout("Jordan Murray") {
+		<div class="max-w-2xl mx-auto px-6 py-16 md:py-24">
+			<!-- Hero Section -->
+			<div class="mb-16">
+				<h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+					My README 👋
+				</h1>
+				<div class="prose prose-lg max-w-none text-base-content/80 space-y-4">
+					<p class="text-xl leading-relaxed">
+						My name is Jordan and I am a software engineer from North Carolina.
 					</p>
-					<a href="/blog" class="btn btn-primary">Read the Blog</a>
+					<p class="text-xl leading-relaxed">
+					  I love building systems in the 0 -> 1 stage, tightening feedback cycles through technology,
+						and triaging and understanding issues.  I'm currently at Wealthfront where I
+						focus on site reliability, devops, and technical guidance to the broader organization.
+					</p>
+					<p class="text-xl leading-relaxed">
+					  I started my career in the defense industry.  I spent a few years at Boeing where I
+						worked on real time flight software, simulations, and firmware development.
+
+						I spent a few years at Lockheed Martin where I focused on simulations, devops, and modernizing
+						the software engineering culture.
+					</p>
+					<p class="text-xl leading-relaxed">
+					  Outside of tech:
+						  <ul>
+							  <li>I am a husband and father 🐻</li>
+							  <li>I have spent thousands of hours training in various grappling arts: brazilian jiu jitsu, judo, and folkstyle wrestling.</li>
+							  <li>I am always working on some house project 🔨</li>
+							</ul>
+					</p>
 				</div>
 			</div>
-		</div>
-		<div class="mt-12">
-			<h2 class="text-3xl font-bold mb-6">Recent Posts</h2>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-				for _, post := range recentPosts {
-					@PostCard(post)
-				}
+
+			<!-- Recent Writing -->
+			if len(recentPosts) > 0 {
+				<div class="mb-16">
+					<h2 class="text-2xl font-bold mb-8">Recent Writing</h2>
+					<div class="space-y-6">
+						for _, post := range recentPosts {
+							@MinimalPostLink(post)
+						}
+					</div>
+					<div class="mt-8">
+						<a href="/blog" class="text-base-content/60 hover:text-base-content transition-colors">
+							View all posts →
+						</a>
+					</div>
+				</div>
+			}
+
+			<!-- Footer Links -->
+			<div class="flex gap-6 text-base-content/60">
+				<a href="https://github.com/fueledbyjordan" class="hover:text-base-content transition-colors">GitHub</a>
+				<a href="mailto:jordan@jordanmurray.xyz" class="hover:text-base-content transition-colors">Email</a>
 			</div>
 		</div>
 	}
+}
+
+templ MinimalPostLink(post models.Post) {
+	<a href={ templ.SafeURL("/blog/" + post.Slug) } class="block group">
+		<div class="flex justify-between items-baseline gap-4">
+			<h3 class="text-lg font-medium group-hover:text-primary transition-colors">
+				{ post.Title }
+			</h3>
+			<span class="text-sm text-base-content/50 whitespace-nowrap">
+				{ post.PublishedAt.Format("Jan 2, 2006") }
+			</span>
+		</div>
+		<p class="text-base-content/60 mt-2">
+			{ post.Excerpt }
+		</p>
+	</a>
 }

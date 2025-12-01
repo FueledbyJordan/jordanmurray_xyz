@@ -26,6 +26,30 @@ templ Layout(title string) {
 	</html>
 }
 
+templ MinimalLayout(title string) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="light">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css"/>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script type="module" src="https://cdn.jsdelivr.net/npm/@sudodevnull/datastar"></script>
+			<style>
+				body {
+					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+				}
+			</style>
+		</head>
+		<body class="min-h-screen bg-base-100 text-base-content antialiased">
+			<main>
+				{ children... }
+			</main>
+		</body>
+	</html>
+}
+
 templ Header() {
 	<header class="navbar bg-base-200 shadow-lg mb-8">
 		<div class="container mx-auto">
