@@ -54,7 +54,7 @@ templ Footer() {
 			<p>Copyright 2014-{ templ.EscapeString(fmt.Sprintf("%d", time.Now().Year())) }. All opinions are solely my own.</p>
 			<p class="text-sm text-base-content/50">
 				if version.GitSHA != "unknown" {
-					Site version: <a href={ templ.SafeURL(fmt.Sprintf("https://github.com/fueledbyjordan/site/commit/%s", version.GitSHA)) } class="hover:underline">{ version.GitSHA[:7] }</a>
+					Site version: <a href={ templ.SafeURL(fmt.Sprintf("https://github.com/fueledbyjordan/jordanmurray_xyz/commit/%s", version.GitSHA)) } class="hover:underline">{ version.GitSHA[:7] }</a>
 				} else {
 					git: unknown
 				}
