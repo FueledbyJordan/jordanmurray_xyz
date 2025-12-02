@@ -11,11 +11,15 @@
       self,
       nixpkgs,
       flake-utils,
+      ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        inherit (pkgs) lib dockerTools buildEnv cacert;
+
+        version = "0.1.0";
 
         templ = pkgs.buildGoModule rec {
           pname = "templ";
@@ -39,6 +43,36 @@
             mainProgram = "templ";
           };
         };
+
+        site = pkgs.buildGoModule {
+          pname = "jordanmurray-xyz";
+          inherit version;
+          src = ./.;
+          vendorHash = null;
+
+          nativeBuildInputs = [ templ ];
+
+          preBuild = ''
+            ${templ}/bin/templ generate
+          '';
+
+          ldflags = [
+            "-X jordanmurray.xyz/site/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
+          ];
+
+          postInstall = ''
+            mkdir -p $out/share/site
+            cp -r static $out/share/site/
+            cp -r content $out/share/site/
+          '';
+
+          meta = with pkgs.lib; {
+            description = "site containing jordanmurray.xyz";
+            homepage = "https://jordanmurray.xyz";
+            license = licenses.mit;
+            mainProgram = "site";
+          };
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -56,27 +90,40 @@
           '';
         };
 
-        packages.default = pkgs.buildGoModule {
-          pname = "jordanmurray-xyz";
-          version = "0.1.0";
-          src = ./.;
-          vendorHash = null;
+        packages = {
+          default = site;
 
-          nativeBuildInputs = [ templ ];
+          jordanmurray-xyz = site;
 
-          preBuild = ''
-            ${templ}/bin/templ generate
-          '';
+          container = dockerTools.buildImage {
+            name = "fueledbyjordan/jordanmurray-xyz";
+            tag = version;
+            created = "now";
 
-          ldflags = [
-            "-X jordanmurray.xyz/site/version.GitSHA=${self.rev or self.dirtyRev or "unknown"}"
-          ];
+            copyToRoot = buildEnv {
+              name = "image-root";
+              paths = [
+                site
+                cacert
+              ];
+              pathsToLink = [
+                "/bin"
+                "/share"
+                "/etc/ssl/certs"
+              ];
+            };
 
-          meta = with pkgs.lib; {
-            description = "site containing jordanmurray.xyz";
-            homepage = "https://jordanmurray.xyz";
-            license = licenses.mit;
-            mainProgram = "site";
+            config = {
+              Cmd = [ "${lib.getExe site}" ];
+              ExposedPorts = {
+                "42069/tcp" = { };
+              };
+              Env = [
+                "PORT=42069"
+              ];
+              User = "10000:10000";
+              WorkingDir = "/share/site";
+            };
           };
         };
       }
