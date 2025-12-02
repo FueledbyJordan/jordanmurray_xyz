@@ -53,7 +53,7 @@ templ Reflection(post models.Post) {
 				}
 			</div>
 			<div class="mt-8">
-				{ post.Content }
+				@templ.Raw(post.Content)
 			</div>
 		</article>
 		<div class="mt-12 text-center">

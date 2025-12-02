@@ -1,4 +1,13 @@
-# Styling with DaisyUI
+---
+title: "Styling with DaisyUI"
+author: "Jordan Murray"
+published_at: 2025-11-27T00:00:00Z
+excerpt: "Discover how DaisyUI makes Tailwind CSS even more productive."
+tags:
+  - css
+  - tailwind
+  - daisyui
+---
 
 DaisyUI is a component library for Tailwind CSS that provides beautiful, ready-to-use components without sacrificing customization.
 
@@ -15,6 +24,8 @@ DaisyUI adds semantic component classes to Tailwind CSS. Instead of writing doze
 
 ## Example Component
 
+Here's a simple card component using DaisyUI:
+
 ```html
 <div class="card bg-base-100 shadow-xl">
   <div class="card-body">
@@ -27,6 +38,8 @@ DaisyUI adds semantic component classes to Tailwind CSS. Instead of writing doze
 </div>
 ```
 
+Compare this to the equivalent Tailwind-only approach, and you'll see how much cleaner and more maintainable this is.
+
 ## Themes
 
 DaisyUI includes multiple themes you can switch between:
@@ -37,8 +50,8 @@ DaisyUI includes multiple themes you can switch between:
 </html>
 ```
 
-Try themes like `dark`, `cupcake`, `cyberpunk`, or `synthwave`!
+Try themes like `dark`, `cupcake`, `cyberpunk`, or `synthwave`! Each theme is carefully crafted with color theory in mind to ensure accessible contrast ratios.
 
 ## Conclusion
 
-DaisyUI makes Tailwind CSS even more productive by providing semantic component classes while maintaining all the flexibility of Tailwind.
+DaisyUI makes Tailwind CSS even more productive by providing semantic component classes while maintaining all the flexibility of Tailwind. It's the perfect balance between utility-first CSS and component-based design.
