@@ -12,7 +12,7 @@ import (
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "42069"
+		port = "9090"
 	}
 
 	// Static files

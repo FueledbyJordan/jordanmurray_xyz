@@ -17,7 +17,11 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        inherit (pkgs) lib dockerTools buildEnv cacert;
+        inherit (pkgs)
+          lib
+          dockerTools
+          buildEnv
+          ;
 
         version = "0.1.0";
 
@@ -104,22 +108,20 @@
               name = "image-root";
               paths = [
                 site
-                cacert
               ];
               pathsToLink = [
                 "/bin"
                 "/share"
-                "/etc/ssl/certs"
               ];
             };
 
             config = {
               Cmd = [ "${lib.getExe site}" ];
               ExposedPorts = {
-                "42069/tcp" = { };
+                "9090/tcp" = { };
               };
               Env = [
-                "PORT=42069"
+                "PORT=9090"
               ];
               User = "10000:10000";
               WorkingDir = "/share/site";
