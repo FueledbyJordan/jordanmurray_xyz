@@ -69,7 +69,7 @@ func renderMarkdown(markdown string) (string, error) {
 			highlighting.NewHighlighting(
 				highlighting.WithStyle("monokai"),
 				highlighting.WithFormatOptions(
-					html.WithClasses(true),
+					html.WithClasses(true), // Use CSS classes
 					html.TabWidth(2),
 				),
 			),
