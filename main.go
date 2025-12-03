@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -13,7 +15,16 @@ import (
 	"jordanmurray.xyz/site/templates"
 )
 
+//go:embed static
+var staticFiles embed.FS
+
+//go:embed content
+var contentFiles embed.FS
+
 func main() {
+	// Set up embedded content filesystem
+	models.SetContentFS(contentFiles)
+
 	// Set up pre-rendering for posts
 	models.SetRenderFunc(func(post *models.Post) ([]byte, error) {
 		var buf bytes.Buffer
@@ -29,9 +40,12 @@ func main() {
 		port = "9090"
 	}
 
-	// Static files
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	// Serve embedded static files
+	staticFS, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	// Routes
 	http.HandleFunc("/", handlers.HandleHome)

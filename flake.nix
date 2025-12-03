@@ -25,6 +25,47 @@
 
         version = "0.1.0";
 
+        # Fetch external vendor assets with fixed hashes for reproducibility
+        tailwindJs = pkgs.fetchurl {
+          url = "https://cdn.tailwindcss.com";
+          sha256 = "sha256-F26JRmGqnNyaXLpscgBEy797i9gNHJoUKnwksbbFDRU=";
+        };
+
+        daisyuiCss = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css";
+          sha256 = "sha256-/fJonUuxkkw6K/ReqJCfynXXQVosFIMt2wuR7WFaNtE=";
+        };
+
+        hackFontCss = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css";
+          sha256 = "sha256-nZuLDiukZ8m5pnOiJdxK1IjXsQ2qbZB1R6x0ddFRyog=";
+        };
+
+        hackFontRegular = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/hack-font@3/build/web/fonts/hack-regular.woff2";
+          sha256 = "sha256-Cw7yVN/Hr8FyUo4xZurOgTmJ4c939Xbdrl9ej7KJfAY=";
+        };
+
+        hackFontBold = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/hack-font@3/build/web/fonts/hack-bold.woff2";
+          sha256 = "sha256-1aZRkOEtHXpOgECF3DzCvIJkug9jNRu4yJBcUB+mmqM=";
+        };
+
+        hackFontItalic = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/hack-font@3/build/web/fonts/hack-italic.woff2";
+          sha256 = "sha256-l/EtxUOQ/SqVY4+MRrmMMlUTbcvgSXD+Q8mw4oPBT70=";
+        };
+
+        hackFontBoldItalic = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/hack-font@3/build/web/fonts/hack-bolditalic.woff2";
+          sha256 = "sha256-1ueYyiSuM+KtmMF2iF9oAO8wNCAad+ArYpM+cNvdIbc=";
+        };
+
+        datastarJs = pkgs.fetchurl {
+          url = "https://cdn.jsdelivr.net/npm/@sudodevnull/datastar";
+          sha256 = "sha256-H4nc9oReY6ZKg9J32E2VkZCAbNXAFXJJv6uypW24+BA=";
+        };
+
         templ = pkgs.buildGoModule rec {
           pname = "templ";
           version = "0.3.960";
@@ -58,6 +99,30 @@
 
           preBuild = ''
             ${templ}/bin/templ generate
+
+            # Create vendor asset directories
+            mkdir -p static/vendor/css
+            mkdir -p static/vendor/js
+            mkdir -p static/vendor/fonts
+
+            # Copy fetched vendor assets
+            cp ${tailwindJs} static/vendor/js/tailwind.js
+            cp ${daisyuiCss} static/vendor/css/daisyui.min.css
+            cp ${datastarJs} static/vendor/js/datastar.js
+
+            # Copy Hack font files
+            cp ${hackFontRegular} static/vendor/fonts/hack-regular.woff2
+            cp ${hackFontBold} static/vendor/fonts/hack-bold.woff2
+            cp ${hackFontItalic} static/vendor/fonts/hack-italic.woff2
+            cp ${hackFontBoldItalic} static/vendor/fonts/hack-bolditalic.woff2
+
+            # Copy and patch Hack font CSS to use local paths
+            cp ${hackFontCss} static/vendor/css/hack.css
+            chmod +w static/vendor/css/hack.css
+            ${pkgs.gnused}/bin/sed -i 's|fonts/hack-regular\.woff2|/static/vendor/fonts/hack-regular.woff2|g' static/vendor/css/hack.css
+            ${pkgs.gnused}/bin/sed -i 's|fonts/hack-bold\.woff2|/static/vendor/fonts/hack-bold.woff2|g' static/vendor/css/hack.css
+            ${pkgs.gnused}/bin/sed -i 's|fonts/hack-italic\.woff2|/static/vendor/fonts/hack-italic.woff2|g' static/vendor/css/hack.css
+            ${pkgs.gnused}/bin/sed -i 's|fonts/hack-bolditalic\.woff2|/static/vendor/fonts/hack-bolditalic.woff2|g' static/vendor/css/hack.css
           '';
 
           ldflags = [

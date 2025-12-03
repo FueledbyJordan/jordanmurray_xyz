@@ -3,8 +3,8 @@ package models
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -48,6 +48,7 @@ type postsCache struct {
 	once          sync.Once
 	renderFunc    func(*Post) ([]byte, error) // Injected function to render posts
 	renderFuncSet bool
+	contentFS     fs.FS // Embedded filesystem for content files
 }
 
 var cache = postsCache{}
@@ -100,8 +101,8 @@ func renderMarkdown(markdown string) (string, error) {
 	return buf.String(), nil
 }
 
-func loadPostFromFile(path string) (*Post, error) {
-	content, err := os.ReadFile(path)
+func loadPostFromFS(fsys fs.FS, path string) (*Post, error) {
+	content, err := fs.ReadFile(fsys, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
@@ -158,20 +159,30 @@ func (p *Post) SetRenderedHTML(html []byte) error {
 
 func (cache *postsCache) init() {
 	cache.once.Do(func() {
+		if cache.contentFS == nil {
+			log.Printf("Error: content filesystem not set")
+			return
+		}
+
 		posts := []Post{}
 		slugMap := make(map[string]*Post)
 
-		reflectionsDir := "content/reflections"
-		files, err := filepath.Glob(filepath.Join(reflectionsDir, "*.md"))
+		// Read all .md files from content/reflections
+		entries, err := fs.ReadDir(cache.contentFS, "content/reflections")
 		if err != nil {
 			log.Printf("Error reading reflections directory: %v", err)
 			return
 		}
 
-		for _, file := range files {
-			post, err := loadPostFromFile(file)
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+				continue
+			}
+
+			path := filepath.Join("content/reflections", entry.Name())
+			post, err := loadPostFromFS(cache.contentFS, path)
 			if err != nil {
-				log.Printf("Error loading post from %s: %v", file, err)
+				log.Printf("Error loading post from %s: %v", path, err)
 				continue
 			}
 			posts = append(posts, *post)
@@ -208,6 +219,12 @@ func (cache *postsCache) preRenderAll() {
 			log.Printf("Warning: failed to compress post %s: %v", post.Slug, err)
 		}
 	}
+}
+
+// SetContentFS sets the embedded filesystem for reading content files
+// Must be called before any posts are accessed
+func SetContentFS(fsys fs.FS) {
+	cache.contentFS = fsys
 }
 
 // SetRenderFunc sets the function used to render posts to HTML
