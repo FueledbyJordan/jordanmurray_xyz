@@ -52,7 +52,7 @@
           pname = "jordanmurray-xyz";
           inherit version;
           src = ./.;
-          vendorHash = "sha256-+Fz8eZCyjGTuPYAlt4eBD+g2n4Kmu+OPBoTOkO6tp8k=";
+          vendorHash = null;
 
           nativeBuildInputs = [ templ ];
 
