@@ -1,15 +1,12 @@
 # jordanmurray.xyz
 
-A site built with Go, Templ, Datastar, and DaisyUI.
+A silly little site.
 
 ## Adding New Blog Posts
 
-Blog posts are currently defined in `models/post.go`. To add a new post:
-
-1. Add a new `Post` struct to the `GetAllPosts()` function
-2. Create corresponding markdown content in `content/posts/` (for reference)
-
-Future enhancement: Load posts from markdown files dynamically.
+1. Add a new markdown file `content/reflections` directory
+2. Ensure the markdown file has proper metadata
+3. Push to master
 
 ## License
 
