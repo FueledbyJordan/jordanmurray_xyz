@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/andybalholm/brotli"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
@@ -21,14 +22,16 @@ import (
 )
 
 type Post struct {
-	ID          string
-	Title       string
-	Slug        string
-	Author      string
-	PublishedAt time.Time
-	Content     string
-	Excerpt     string
-	Tags        []string
+	ID                 string
+	Title              string
+	Slug               string
+	Author             string
+	PublishedAt        time.Time
+	Content            string
+	Excerpt            string
+	Tags               []string
+	RenderedHTML       []byte // Pre-rendered complete HTML page
+	RenderedHTMLBrotli []byte // Brotli compressed version
 }
 
 type FrontMatter struct {
@@ -40,9 +43,11 @@ type FrontMatter struct {
 }
 
 type postsCache struct {
-	allPosts   []Post
-	postBySlug map[string]*Post
-	once       sync.Once
+	allPosts      []Post
+	postBySlug    map[string]*Post
+	once          sync.Once
+	renderFunc    func(*Post) ([]byte, error) // Injected function to render posts
+	renderFuncSet bool
 }
 
 var cache = postsCache{}
@@ -126,6 +131,31 @@ func loadPostFromFile(path string) (*Post, error) {
 	}, nil
 }
 
+// SetRenderedHTML stores pre-rendered HTML and compresses it with brotli
+func (p *Post) SetRenderedHTML(html []byte) error {
+	p.RenderedHTML = html
+
+	// Compress with brotli (quality 6 is a good balance of speed/compression)
+	var compressed bytes.Buffer
+	writer := brotli.NewWriterLevel(&compressed, 6)
+	if _, err := writer.Write(html); err != nil {
+		return fmt.Errorf("failed to compress: %w", err)
+	}
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("failed to close compressor: %w", err)
+	}
+
+	p.RenderedHTMLBrotli = compressed.Bytes()
+
+	log.Printf("Pre-rendered post %s: %d bytes (uncompressed) -> %d bytes (brotli) [%.1f%% reduction]",
+		p.Slug,
+		len(p.RenderedHTML),
+		len(p.RenderedHTMLBrotli),
+		100.0*(1.0-float64(len(p.RenderedHTMLBrotli))/float64(len(p.RenderedHTML))))
+
+	return nil
+}
+
 func (cache *postsCache) init() {
 	cache.once.Do(func() {
 		posts := []Post{}
@@ -158,7 +188,33 @@ func (cache *postsCache) init() {
 		cache.allPosts = posts
 		cache.postBySlug = slugMap
 		log.Printf("Loaded %d posts into cache", len(posts))
+
+		// Pre-render posts if render function is set
+		if cache.renderFuncSet && cache.renderFunc != nil {
+			cache.preRenderAll()
+		}
 	})
+}
+
+func (cache *postsCache) preRenderAll() {
+	for i := range cache.allPosts {
+		post := &cache.allPosts[i]
+		html, err := cache.renderFunc(post)
+		if err != nil {
+			log.Printf("Warning: failed to pre-render post %s: %v", post.Slug, err)
+			continue
+		}
+		if err := post.SetRenderedHTML(html); err != nil {
+			log.Printf("Warning: failed to compress post %s: %v", post.Slug, err)
+		}
+	}
+}
+
+// SetRenderFunc sets the function used to render posts to HTML
+// Must be called before any posts are accessed
+func SetRenderFunc(fn func(*Post) ([]byte, error)) {
+	cache.renderFunc = fn
+	cache.renderFuncSet = true
 }
 
 func GetAllPosts() []Post {

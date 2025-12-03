@@ -9,6 +9,10 @@ github.com/alecthomas/chroma/v2
 github.com/alecthomas/chroma/v2/formatters/html
 github.com/alecthomas/chroma/v2/lexers
 github.com/alecthomas/chroma/v2/styles
+# github.com/andybalholm/brotli v1.2.0
+## explicit; go 1.22
+github.com/andybalholm/brotli
+github.com/andybalholm/brotli/matchfinder
 # github.com/dlclark/regexp2 v1.7.0
 ## explicit; go 1.13
 github.com/dlclark/regexp2
