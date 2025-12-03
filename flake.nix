@@ -95,7 +95,7 @@
           src = ./.;
           vendorHash = null;
 
-          nativeBuildInputs = [ templ ];
+          nativeBuildInputs = [ templ pkgs.nodePackages.terser ];
 
           preBuild = ''
             ${templ}/bin/templ generate
@@ -105,10 +105,14 @@
             mkdir -p static/vendor/js
             mkdir -p static/vendor/fonts
 
-            # Copy fetched vendor assets
-            cp ${tailwindJs} static/vendor/js/tailwind.js
+            # Copy and minify JavaScript assets
+            echo "Minifying tailwind.js..."
+            ${pkgs.nodePackages.terser}/bin/terser ${tailwindJs} --compress --mangle -o static/vendor/js/tailwind.js
+            echo "Minifying datastar.js..."
+            ${pkgs.nodePackages.terser}/bin/terser ${datastarJs} --compress --mangle -o static/vendor/js/datastar.js
+
+            # Copy CSS assets (already minified)
             cp ${daisyuiCss} static/vendor/css/daisyui.min.css
-            cp ${datastarJs} static/vendor/js/datastar.js
 
             # Copy Hack font files
             cp ${hackFontRegular} static/vendor/fonts/hack-regular.woff2
