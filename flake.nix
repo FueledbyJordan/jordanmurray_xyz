@@ -23,7 +23,7 @@
           buildEnv
           ;
 
-        version = "0.1.0";
+        version = "latest";
 
         # Fetch external vendor assets with fixed hashes for reproducibility
         tailwindJs = pkgs.fetchurl {
