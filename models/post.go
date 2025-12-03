@@ -6,13 +6,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
 	highlighting "github.com/yuin/goldmark-highlighting/v2"
+	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 	"gopkg.in/yaml.v3"
@@ -24,7 +26,7 @@ type Post struct {
 	Slug        string
 	Author      string
 	PublishedAt time.Time
-	Content     string // HTML content rendered from markdown
+	Content     string
 	Excerpt     string
 	Tags        []string
 }
@@ -37,22 +39,26 @@ type FrontMatter struct {
 	Tags        []string  `yaml:"tags"`
 }
 
-// parseFrontMatter separates YAML front matter from markdown content
+type postsCache struct {
+	allPosts   []Post
+	postBySlug map[string]*Post
+	once       sync.Once
+}
+
+var cache = postsCache{}
+
 func parseFrontMatter(content []byte) (FrontMatter, string, error) {
 	var fm FrontMatter
 
-	// Check if content starts with ---
 	if !bytes.HasPrefix(content, []byte("---\n")) {
 		return fm, string(content), fmt.Errorf("no front matter found")
 	}
 
-	// Find the end of front matter
 	parts := bytes.SplitN(content[4:], []byte("\n---\n"), 2)
 	if len(parts) != 2 {
 		return fm, string(content), fmt.Errorf("invalid front matter format")
 	}
 
-	// Parse YAML front matter
 	if err := yaml.Unmarshal(parts[0], &fm); err != nil {
 		return fm, "", fmt.Errorf("failed to parse front matter: %w", err)
 	}
@@ -60,7 +66,6 @@ func parseFrontMatter(content []byte) (FrontMatter, string, error) {
 	return fm, string(parts[1]), nil
 }
 
-// renderMarkdown converts markdown to HTML with syntax highlighting
 func renderMarkdown(markdown string) (string, error) {
 	md := goldmark.New(
 		goldmark.WithExtensions(
@@ -69,7 +74,7 @@ func renderMarkdown(markdown string) (string, error) {
 			highlighting.NewHighlighting(
 				highlighting.WithStyle("monokai"),
 				highlighting.WithFormatOptions(
-					html.WithClasses(true), // Use CSS classes
+					html.WithClasses(true),
 					html.TabWidth(2),
 				),
 			),
@@ -78,7 +83,7 @@ func renderMarkdown(markdown string) (string, error) {
 			parser.WithAutoHeadingID(),
 		),
 		goldmark.WithRendererOptions(
-			goldmarkhtml.WithUnsafe(), // Allow raw HTML in markdown
+			goldmarkhtml.WithUnsafe(),
 		),
 	)
 
@@ -90,7 +95,6 @@ func renderMarkdown(markdown string) (string, error) {
 	return buf.String(), nil
 }
 
-// loadPostFromFile loads a post from a markdown file
 func loadPostFromFile(path string) (*Post, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -107,7 +111,6 @@ func loadPostFromFile(path string) (*Post, error) {
 		return nil, fmt.Errorf("failed to render markdown: %w", err)
 	}
 
-	// Generate slug from filename
 	filename := filepath.Base(path)
 	slug := strings.TrimSuffix(filename, filepath.Ext(filename))
 
@@ -123,44 +126,47 @@ func loadPostFromFile(path string) (*Post, error) {
 	}, nil
 }
 
-// GetAllPosts loads all posts from the content/reflections directory
-func GetAllPosts() []Post {
-	posts := []Post{}
+func (cache *postsCache) init() {
+	cache.once.Do(func() {
+		posts := []Post{}
+		slugMap := make(map[string]*Post)
 
-	reflectionsDir := "content/reflections"
-	files, err := filepath.Glob(filepath.Join(reflectionsDir, "*.md"))
-	if err != nil {
-		log.Printf("Error reading reflections directory: %v", err)
-		return posts
-	}
-
-	for _, file := range files {
-		post, err := loadPostFromFile(file)
+		reflectionsDir := "content/reflections"
+		files, err := filepath.Glob(filepath.Join(reflectionsDir, "*.md"))
 		if err != nil {
-			log.Printf("Error loading post from %s: %v", file, err)
-			continue
+			log.Printf("Error reading reflections directory: %v", err)
+			return
 		}
-		posts = append(posts, *post)
-	}
 
-	// Sort posts by published date (newest first)
-	for i := 0; i < len(posts); i++ {
-		for j := i + 1; j < len(posts); j++ {
-			if posts[i].PublishedAt.Before(posts[j].PublishedAt) {
-				posts[i], posts[j] = posts[j], posts[i]
+		for _, file := range files {
+			post, err := loadPostFromFile(file)
+			if err != nil {
+				log.Printf("Error loading post from %s: %v", file, err)
+				continue
 			}
+			posts = append(posts, *post)
 		}
-	}
 
-	return posts
+		slices.SortFunc(posts, func(a, b Post) int {
+			return b.PublishedAt.Compare(a.PublishedAt)
+		})
+
+		for i := range posts {
+			slugMap[posts[i].Slug] = &posts[i]
+		}
+
+		cache.allPosts = posts
+		cache.postBySlug = slugMap
+		log.Printf("Loaded %d posts into cache", len(posts))
+	})
+}
+
+func GetAllPosts() []Post {
+	cache.init()
+	return cache.allPosts
 }
 
 func GetPostBySlug(slug string) *Post {
-	posts := GetAllPosts()
-	for _, post := range posts {
-		if post.Slug == slug {
-			return &post
-		}
-	}
-	return nil
+	cache.init()
+	return cache.postBySlug[slug]
 }
