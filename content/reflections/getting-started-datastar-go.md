@@ -20,7 +20,7 @@ Datastar is a lightweight framework for building reactive web applications. When
 
 ## Basic Example
 
-Here's a simple counter example:
+Here's a simple counter example using Datastar:
 
 ```html
 <div data-store="{count: 0}">
@@ -28,6 +28,8 @@ Here's a simple counter example:
   <button data-on-click="$count++">Increment</button>
 </div>
 ```
+
+This declarative approach keeps your frontend code simple and maintainable. The `data-store` attribute initializes reactive state, `data-text` binds the display, and `data-on-click` handles user interactions.
 
 ## Integration with Go
 

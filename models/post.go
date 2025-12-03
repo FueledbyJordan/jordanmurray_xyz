@@ -9,10 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer/html"
+	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
 	"gopkg.in/yaml.v3"
 )
 
@@ -58,18 +60,25 @@ func parseFrontMatter(content []byte) (FrontMatter, string, error) {
 	return fm, string(parts[1]), nil
 }
 
-// renderMarkdown converts markdown to HTML
+// renderMarkdown converts markdown to HTML with syntax highlighting
 func renderMarkdown(markdown string) (string, error) {
 	md := goldmark.New(
 		goldmark.WithExtensions(
 			extension.GFM,
 			extension.Typographer,
+			highlighting.NewHighlighting(
+				highlighting.WithStyle("monokai"),
+				highlighting.WithFormatOptions(
+					html.WithClasses(true),
+					html.TabWidth(2),
+				),
+			),
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
 		goldmark.WithRendererOptions(
-			html.WithUnsafe(), // Allow raw HTML in markdown
+			goldmarkhtml.WithUnsafe(), // Allow raw HTML in markdown
 		),
 	)
 

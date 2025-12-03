@@ -1,3 +1,124 @@
+/* Article typography */
+article {
+  color: oklch(var(--bc));
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+article h1,
+article h2,
+article h3,
+article h4,
+article h5,
+article h6 {
+  color: oklch(var(--bc));
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+article h2 {
+  font-size: 1.875rem;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+article h3 {
+  font-size: 1.5rem;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+article h4 {
+  font-size: 1.25rem;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+
+article p {
+  margin-bottom: 1.25em;
+}
+
+article a {
+  color: oklch(var(--p));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+article a:hover {
+  color: oklch(var(--pf));
+}
+
+article code {
+  background-color: oklch(var(--b2));
+  color: oklch(var(--bc));
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+  font-size: 0.875em;
+  font-weight: 600;
+}
+
+article pre {
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin-bottom: 1.5em;
+  margin-top: 1.5em;
+}
+
+article pre code {
+  background-color: transparent;
+  padding: 0;
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+/* Syntax highlighting adjustments */
+article .chroma {
+  background-color: #272822 !important;
+  border-radius: 0.5em;
+  padding: 1em;
+  margin: 1.5em 0;
+}
+
+article .chroma code {
+  background-color: transparent;
+  color: inherit;
+}
+
+article ul,
+article ol {
+  margin-bottom: 1.25em;
+  padding-left: 1.5em;
+}
+
+article li {
+  margin-bottom: 0.5em;
+}
+
+article strong {
+  font-weight: 700;
+  color: oklch(var(--bc));
+}
+
+article em {
+  font-style: italic;
+}
+
+article blockquote {
+  border-left: 4px solid oklch(var(--p));
+  padding-left: 1em;
+  font-style: italic;
+  color: oklch(var(--bc) / 0.8);
+  margin: 1.5em 0;
+}
+
+article hr {
+  border: 0;
+  border-top: 1px solid oklch(var(--bc) / 0.2);
+  margin: 2em 0;
+}
+
+/* Company highlights */
 .highlight-wealthfront {
   color: #FFFFFF;
   background-color: #4840BB;
