@@ -1,9 +1,8 @@
-/* Article typography - LOADED */
+/* Article typography */
 article.max-w-4xl {
   color: oklch(var(--bc)) !important;
   font-size: 1.125rem !important;
   line-height: 1.75 !important;
-  background-color: rgba(255, 0, 0, 0.05) !important; /* Debug: light red tint */
 }
 
 article.max-w-4xl h1,
@@ -21,8 +20,6 @@ article.max-w-4xl h2 {
   font-size: 1.875rem !important;
   margin-top: 2em !important;
   margin-bottom: 1em !important;
-  border-left: 5px solid red !important; /* Debug: should be very obvious */
-  padding-left: 1rem !important;
 }
 
 article.max-w-4xl h3 {
