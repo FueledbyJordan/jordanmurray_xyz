@@ -51,7 +51,7 @@ func main() {
 	http.HandleFunc("/", handlers.HandleHome)
 	http.HandleFunc("/reflections", handlers.HandleReflections)
 	http.HandleFunc("/reflections/", handlers.HandleReflection)
-	http.HandleFunc("/rss", handlers.HandleRSS)
+	http.HandleFunc("/reflections/feed.rss", handlers.HandleRSS)
 
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("Server starting on http://localhost%s", addr)

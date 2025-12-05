@@ -138,9 +138,9 @@ func HandleRSS(w http.ResponseWriter, r *http.Request) {
 	feed := RSS{
 		Version: "2.0",
 		Channel: Channel{
-			Title:         "Jordan Murray - Reflections",
+			Title:         "jordanmurray.xyz // reflections",
 			Link:          baseURL,
-			Description:   "Thoughts and writings on software development, technology, and more",
+			Description:   "a personal time capsule in a glass box",
 			Language:      "en-us",
 			LastBuildDate: lastBuildDate.Format(time.RFC1123Z),
 			Items:         items,
