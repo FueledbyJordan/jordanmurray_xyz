@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"os"
 
-	"jordanmurray.xyz/site/cache"
-	"jordanmurray.xyz/site/handlers"
-	"jordanmurray.xyz/site/models"
-	"jordanmurray.xyz/site/rss"
+	"jordanmurray.xyz/site/internal/cache"
+	"jordanmurray.xyz/site/internal/handlers"
+	"jordanmurray.xyz/site/internal/models"
+	"jordanmurray.xyz/site/internal/rss"
 	"jordanmurray.xyz/site/templates"
 )
 

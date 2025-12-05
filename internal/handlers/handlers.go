@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"jordanmurray.xyz/site/cache"
-	"jordanmurray.xyz/site/rss"
+	"jordanmurray.xyz/site/internal/cache"
+	"jordanmurray.xyz/site/internal/rss"
 	"jordanmurray.xyz/site/templates"
 )
 

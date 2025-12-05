@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
-	"jordanmurray.xyz/site/models"
+	"jordanmurray.xyz/site/internal/models"
 )
 
 // RSS feed types

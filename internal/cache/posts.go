@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"jordanmurray.xyz/site/models"
-	"jordanmurray.xyz/site/rss"
+	"jordanmurray.xyz/site/internal/models"
+	"jordanmurray.xyz/site/internal/rss"
 )
 
 type PostsCache struct {
