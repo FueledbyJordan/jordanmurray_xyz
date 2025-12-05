@@ -25,6 +25,13 @@ func main() {
 	// Set up embedded content filesystem
 	models.SetContentFS(contentFiles)
 
+	// Set up RSS base URL for feed generation
+	rssBaseURL := os.Getenv("RSS_BASE_URL")
+	if rssBaseURL == "" {
+		rssBaseURL = "https://jordanmurray.xyz"
+	}
+	models.SetRSSBaseURL(rssBaseURL)
+
 	// Set up pre-rendering for posts
 	models.SetRenderFunc(func(post *models.Post) ([]byte, error) {
 		var buf bytes.Buffer

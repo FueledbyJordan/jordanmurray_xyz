@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io/fs"
 	"log"
@@ -43,12 +44,16 @@ type FrontMatter struct {
 }
 
 type postsCache struct {
-	allPosts      []Post
-	postBySlug    map[string]*Post
-	once          sync.Once
-	renderFunc    func(*Post) ([]byte, error) // Injected function to render posts
-	renderFuncSet bool
-	contentFS     fs.FS // Embedded filesystem for content files
+	allPosts         []Post
+	postBySlug       map[string]*Post
+	once             sync.Once
+	renderFunc       func(*Post) ([]byte, error) // Injected function to render posts
+	renderFuncSet    bool
+	contentFS        fs.FS  // Embedded filesystem for content files
+	rssBaseURL       string // Base URL for RSS feed
+	rssFeed          []byte // Pre-rendered RSS feed
+	rssFeedBrotli    []byte // Brotli compressed RSS feed
+	rssBaseURLSet    bool
 }
 
 var cache = postsCache{}
@@ -204,6 +209,11 @@ func (cache *postsCache) init() {
 		if cache.renderFuncSet && cache.renderFunc != nil {
 			cache.preRenderAll()
 		}
+
+		// Pre-generate RSS feed if base URL is set
+		if cache.rssBaseURLSet {
+			cache.generateRSSFeed()
+		}
 	})
 }
 
@@ -221,6 +231,97 @@ func (cache *postsCache) preRenderAll() {
 	}
 }
 
+// RSS feed types
+type RSS struct {
+	XMLName xml.Name `xml:"rss"`
+	Version string   `xml:"version,attr"`
+	Channel Channel  `xml:"channel"`
+}
+
+type Channel struct {
+	Title         string `xml:"title"`
+	Link          string `xml:"link"`
+	Description   string `xml:"description"`
+	Language      string `xml:"language"`
+	LastBuildDate string `xml:"lastBuildDate"`
+	Items         []Item `xml:"item"`
+}
+
+type Item struct {
+	Title       string `xml:"title"`
+	Link        string `xml:"link"`
+	Description string `xml:"description"`
+	PubDate     string `xml:"pubDate"`
+	GUID        string `xml:"guid"`
+}
+
+func (cache *postsCache) generateRSSFeed() {
+	var items []Item
+	var lastBuildDate time.Time
+
+	for _, post := range cache.allPosts {
+		items = append(items, Item{
+			Title:       post.Title,
+			Link:        cache.rssBaseURL + "/reflections/" + post.Slug,
+			Description: post.Excerpt,
+			PubDate:     post.PublishedAt.Format(time.RFC1123Z),
+			GUID:        cache.rssBaseURL + "/reflections/" + post.Slug,
+		})
+
+		if post.PublishedAt.After(lastBuildDate) {
+			lastBuildDate = post.PublishedAt
+		}
+	}
+
+	if lastBuildDate.IsZero() && len(cache.allPosts) > 0 {
+		lastBuildDate = time.Now()
+	}
+
+	feed := RSS{
+		Version: "2.0",
+		Channel: Channel{
+			Title:         "jordanmurray.xyz // reflections",
+			Link:          cache.rssBaseURL,
+			Description:   "a personal time capsule in a glass box",
+			Language:      "en-us",
+			LastBuildDate: lastBuildDate.Format(time.RFC1123Z),
+			Items:         items,
+		},
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString(xml.Header)
+
+	encoder := xml.NewEncoder(&buf)
+	encoder.Indent("", "  ")
+
+	if err := encoder.Encode(feed); err != nil {
+		log.Printf("Error encoding RSS feed: %v", err)
+		return
+	}
+
+	cache.rssFeed = buf.Bytes()
+
+	// Compress with brotli
+	var compressed bytes.Buffer
+	writer := brotli.NewWriterLevel(&compressed, 6)
+	if _, err := writer.Write(cache.rssFeed); err != nil {
+		log.Printf("Error compressing RSS feed: %v", err)
+		return
+	}
+	if err := writer.Close(); err != nil {
+		log.Printf("Error closing RSS compressor: %v", err)
+		return
+	}
+
+	cache.rssFeedBrotli = compressed.Bytes()
+
+	log.Printf("Pre-generated RSS feed: %d bytes (uncompressed) -> %d bytes (brotli) [%.1f%% reduction]",
+		len(cache.rssFeed),
+		len(cache.rssFeedBrotli),
+		100.0*(1.0-float64(len(cache.rssFeedBrotli))/float64(len(cache.rssFeed))))
+}
+
 // SetContentFS sets the embedded filesystem for reading content files
 // Must be called before any posts are accessed
 func SetContentFS(fsys fs.FS) {
@@ -234,6 +335,13 @@ func SetRenderFunc(fn func(*Post) ([]byte, error)) {
 	cache.renderFuncSet = true
 }
 
+// SetRSSBaseURL sets the base URL for RSS feed generation
+// Must be called before any posts are accessed
+func SetRSSBaseURL(baseURL string) {
+	cache.rssBaseURL = baseURL
+	cache.rssBaseURLSet = true
+}
+
 func GetAllPosts() []Post {
 	cache.init()
 	return cache.allPosts
@@ -242,4 +350,16 @@ func GetAllPosts() []Post {
 func GetPostBySlug(slug string) *Post {
 	cache.init()
 	return cache.postBySlug[slug]
+}
+
+// GetRSSFeed returns the pre-generated RSS feed
+func GetRSSFeed() []byte {
+	cache.init()
+	return cache.rssFeed
+}
+
+// GetRSSFeedBrotli returns the pre-generated brotli-compressed RSS feed
+func GetRSSFeedBrotli() []byte {
+	cache.init()
+	return cache.rssFeedBrotli
 }
