@@ -5,9 +5,16 @@ import (
 	"net/http"
 	"strings"
 
-	"jordanmurray.xyz/site/models"
+	"jordanmurray.xyz/site/cache"
+	"jordanmurray.xyz/site/rss"
 	"jordanmurray.xyz/site/templates"
 )
+
+var rssGenerator *rss.Generator
+
+func SetRSSGenerator(gen *rss.Generator) {
+	rssGenerator = gen
+}
 
 func HandleHome(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -15,7 +22,7 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts := models.GetAllPosts()
+	posts := cache.Posts.GetAllPosts()
 	component := templates.Home(posts)
 
 	if err := component.Render(r.Context(), w); err != nil {
@@ -25,7 +32,7 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReflections(w http.ResponseWriter, r *http.Request) {
-	posts := models.GetAllPosts()
+	posts := cache.Posts.GetAllPosts()
 	component := templates.Reflections(posts)
 
 	if err := component.Render(r.Context(), w); err != nil {
@@ -41,7 +48,7 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post := models.GetPostBySlug(slug)
+	post := cache.Posts.GetPostBySlug(slug)
 	if post == nil {
 		http.NotFound(w, r)
 		return
@@ -74,10 +81,16 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
+	if rssGenerator == nil {
+		log.Printf("RSS generator not configured")
+		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
+		return
+	}
+
 	// Check if client accepts brotli encoding
 	acceptEncoding := r.Header.Get("Accept-Encoding")
 	if strings.Contains(acceptEncoding, "br") {
-		rssFeed := models.GetRSSFeedBrotli()
+		rssFeed := rssGenerator.GetFeedBrotli()
 		if len(rssFeed) > 0 {
 			// Serve pre-compressed brotli version
 			w.Header().Set("Content-Encoding", "br")
@@ -89,7 +102,7 @@ func HandleRSS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve uncompressed pre-generated version
-	rssFeed := models.GetRSSFeed()
+	rssFeed := rssGenerator.GetFeed()
 	if len(rssFeed) > 0 {
 		w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
 		w.Write(rssFeed)

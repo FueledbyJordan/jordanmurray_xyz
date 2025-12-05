@@ -10,8 +10,10 @@ import (
 	"net/http"
 	"os"
 
+	"jordanmurray.xyz/site/cache"
 	"jordanmurray.xyz/site/handlers"
 	"jordanmurray.xyz/site/models"
+	"jordanmurray.xyz/site/rss"
 	"jordanmurray.xyz/site/templates"
 )
 
@@ -23,17 +25,23 @@ var contentFiles embed.FS
 
 func main() {
 	// Set up embedded content filesystem
-	models.SetContentFS(contentFiles)
+	cache.Posts.SetContentFS(contentFiles)
 
-	// Set up RSS base URL for feed generation
+	// Set up RSS generator
 	rssBaseURL := os.Getenv("RSS_BASE_URL")
 	if rssBaseURL == "" {
 		rssBaseURL = "https://jordanmurray.xyz"
 	}
-	models.SetRSSBaseURL(rssBaseURL)
+	rssGen := rss.NewGenerator(
+		rssBaseURL,
+		"jordanmurray.xyz // reflections",
+		"a personal time capsule in a glass box",
+	)
+	cache.Posts.SetRSSGenerator(rssGen)
+	handlers.SetRSSGenerator(rssGen)
 
 	// Set up pre-rendering for posts
-	models.SetRenderFunc(func(post *models.Post) ([]byte, error) {
+	cache.Posts.SetRenderFunc(func(post *models.Post) ([]byte, error) {
 		var buf bytes.Buffer
 		component := templates.Reflection(*post)
 		if err := component.Render(context.Background(), &buf); err != nil {
