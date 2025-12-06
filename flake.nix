@@ -173,6 +173,10 @@
 
           jordanmurray-xyz = site;
 
+          site-stripped = site.overrideAttrs (oldAttrs: {
+            ldflags = oldAttrs.ldflags ++ [ "-s" "-w" ];
+          });
+
           container = dockerTools.buildImage {
             name = "fueledbyjordan/jordanmurray-xyz";
             tag = version;
@@ -181,7 +185,7 @@
             copyToRoot = buildEnv {
               name = "image-root";
               paths = [
-                site
+                self.packages.${system}.site-stripped
               ];
               pathsToLink = [
                 "/bin"
@@ -190,7 +194,7 @@
             };
 
             config = {
-              Cmd = [ "${lib.getExe site}" ];
+              Cmd = [ "${lib.getExe self.packages.${system}.site-stripped}" ];
               ExposedPorts = {
                 "9090/tcp" = { };
               };
