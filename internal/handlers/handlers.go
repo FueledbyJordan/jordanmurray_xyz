@@ -6,26 +6,9 @@ import (
 	"strings"
 
 	"jordanmurray.xyz/site/internal/cache"
+	"jordanmurray.xyz/site/internal/renderer"
 	"jordanmurray.xyz/site/templates"
 )
-
-type encodedResponse interface {
-	Data() []byte
-	CompressedData() []byte
-	ContentType() string
-}
-
-func writeResponse(w http.ResponseWriter, r *http.Request, resp encodedResponse) {
-	w.Header().Set("Content-Type", resp.ContentType())
-
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "br") {
-		w.Header().Set("Content-Encoding", "br")
-		w.Header().Set("Vary", "Accept-Encoding")
-		w.Write(resp.CompressedData())
-	} else {
-		w.Write(resp.Data())
-	}
-}
 
 func HandleHome(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -65,7 +48,7 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponse(w, r, cachedPost)
+	renderer.Write(w, r, cachedPost)
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
@@ -74,5 +57,5 @@ func HandleRSS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponse(w, r, &cache.Posts.Generator)
+	renderer.Write(w, r, &cache.Posts.Generator)
 }
