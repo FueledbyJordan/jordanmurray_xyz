@@ -14,56 +14,13 @@ import (
 	"jordanmurray.xyz/site/internal/renderer"
 )
 
-type Cache struct {
-	allPosts      []models.Post
-	postBySlug    map[string]renderer.RenderedPost
-	rss           renderer.RenderedRSSFeed
-	inititialized sync.Once
-}
-
 var cache = &Cache{}
 
-func Initialize(fsys embed.FS, rssConfig models.RSSConfig, ctx context.Context) {
-	cache.inititialized.Do(func() {
-		var cachedPosts []renderer.RenderedPost
-
-		if err := fs.WalkDir(fsys, "content/reflections", func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if d.IsDir() || filepath.Ext(d.Name()) != ".md" {
-				return nil
-			}
-
-			post, err := models.LoadPostFromFS(fsys, path)
-			if err != nil {
-				return fmt.Errorf("error loading post from %s: %w", path, err)
-			}
-
-			cachedPost, err := renderer.NewRenderedPost(post, ctx)
-			if err != nil {
-				return fmt.Errorf("error caching post %s: %w", post.Slug, err)
-			}
-
-			cachedPosts = append(cachedPosts, cachedPost)
-			return nil
-		}); err != nil {
-			panic(fmt.Errorf("error walking reflections directory: %w", err))
-		}
-
-		cache.loadPosts(cachedPosts)
-		if err := cache.constructRss(rssConfig); err != nil {
-			panic(fmt.Errorf("error caching rss: %w", err))
-		}
-	})
-}
-
-func Get() (*Cache, error) {
-	if cache == nil {
-		return nil, errors.New("cache is nil")
-	}
-	return cache, nil
+type Cache struct {
+	allPosts   []models.Post
+	postBySlug map[string]renderer.RenderedPost
+	rss        renderer.RenderedRSSFeed
+	once       sync.Once
 }
 
 func (c *Cache) AllPosts() []models.Post {
@@ -83,7 +40,7 @@ func (c *Cache) RSS() renderer.RenderedRSSFeed {
 	return c.rss
 }
 
-func (c *Cache) loadPosts(renderedPosts []renderer.RenderedPost) {
+func (c *Cache) storePosts(renderedPosts []renderer.RenderedPost) {
 	posts := make([]models.Post, len(renderedPosts))
 	slugMap := make(map[string]renderer.RenderedPost)
 
@@ -114,4 +71,63 @@ func (c *Cache) constructRss(rssConfig models.RSSConfig) error {
 	c.rss = renderedRssFeed
 
 	return nil
+}
+
+func Hydrate(fsys embed.FS, rssConfig models.RSSConfig, ctx context.Context) {
+	cache.once.Do(func() {
+		cachedPosts, err := loadRenderedPosts(fsys, ctx)
+		if err != nil {
+			panic(fmt.Errorf("error loading posts: %w", err))
+		}
+
+		cache.storePosts(cachedPosts)
+		if err := cache.constructRss(rssConfig); err != nil {
+			panic(fmt.Errorf("error caching rss: %w", err))
+		}
+	})
+}
+
+func Get() (*Cache, error) {
+	if cache == nil {
+		return nil, errors.New("cache is nil")
+	}
+	return cache, nil
+}
+
+func loadRenderedPosts(fsys embed.FS, ctx context.Context) ([]renderer.RenderedPost, error) {
+	var cachedPosts []renderer.RenderedPost
+
+	err := fs.WalkDir(fsys, "content/reflections", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("walking error: %w", err)
+		}
+
+		if d.IsDir() || filepath.Ext(d.Name()) != ".md" {
+			return nil
+		}
+
+		cachedPost, err := loadAndRenderPost(fsys, path, ctx)
+		if err != nil {
+			return fmt.Errorf("rendering posts: %w", err)
+		}
+
+		cachedPosts = append(cachedPosts, cachedPost)
+		return nil
+	})
+
+	return cachedPosts, err
+}
+
+func loadAndRenderPost(fsys embed.FS, path string, ctx context.Context) (renderer.RenderedPost, error) {
+	post, err := models.LoadPostFromFS(fsys, path)
+	if err != nil {
+		return renderer.RenderedPost{}, fmt.Errorf("error loading post from %s: %w", path, err)
+	}
+
+	cachedPost, err := renderer.NewRenderedPost(post, ctx)
+	if err != nil {
+		return renderer.RenderedPost{}, fmt.Errorf("error rendering post %s: %w", post.Slug, err)
+	}
+
+	return cachedPost, nil
 }

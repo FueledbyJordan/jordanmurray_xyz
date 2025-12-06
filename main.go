@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"time"
 
 	"jordanmurray.xyz/site/internal/cache"
 	"jordanmurray.xyz/site/internal/handlers"
@@ -34,7 +35,11 @@ func main() {
 	}
 
 	ctx := context.Background()
-	cache.Initialize(contentFiles, rssConfig, ctx)
+
+	hydrateCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	cache.Hydrate(contentFiles, rssConfig, hydrateCtx)
 
 	port := os.Getenv("PORT")
 	if port == "" {
