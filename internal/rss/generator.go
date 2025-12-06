@@ -3,14 +3,14 @@ package rss
 import (
 	"bytes"
 	"encoding/xml"
-	"log"
+	"fmt"
+	"strings"
 	"time"
 
-	"github.com/andybalholm/brotli"
 	"jordanmurray.xyz/site/internal/models"
+	"jordanmurray.xyz/site/internal/utils"
 )
 
-// RSS feed types
 type RSS struct {
 	XMLName xml.Name `xml:"rss"`
 	Version string   `xml:"version,attr"`
@@ -35,32 +35,33 @@ type Item struct {
 }
 
 type Generator struct {
-	baseURL       string
-	feed          []byte
-	feedBrotli    []byte
-	title         string
-	description   string
+	baseURL        string
+	feed           []byte
+	feedBrotli     []byte
+	title          string
+	description    string
 }
 
-func NewGenerator(baseURL, title, description string) *Generator {
+func NewGenerator(URL, title, description string) *Generator {
 	return &Generator{
-		baseURL:     baseURL,
+		baseURL:     URL,
 		title:       title,
 		description: description,
 	}
 }
 
-func (g *Generator) Generate(posts []models.Post) {
+func (g *Generator) Generate(posts []models.Post) error {
 	var items []Item
 	var lastBuildDate time.Time
 
 	for _, post := range posts {
+		postPath := strings.Join([]string{g.baseURL, post.Slug}, "/")
 		items = append(items, Item{
 			Title:       post.Title,
-			Link:        g.baseURL + "/reflections/" + post.Slug,
+			Link:        postPath,
 			Description: post.Excerpt,
 			PubDate:     post.PublishedAt.Format(time.RFC1123Z),
-			GUID:        g.baseURL + "/reflections/" + post.Slug,
+			GUID:        postPath,
 		})
 
 		if post.PublishedAt.After(lastBuildDate) {
@@ -91,30 +92,19 @@ func (g *Generator) Generate(posts []models.Post) {
 	encoder.Indent("", "  ")
 
 	if err := encoder.Encode(feed); err != nil {
-		log.Printf("Error encoding RSS feed: %v", err)
-		return
+		return fmt.Errorf("failed to encode rss feed: %w", err)
 	}
 
 	g.feed = buf.Bytes()
 
-	// Compress with brotli
-	var compressed bytes.Buffer
-	writer := brotli.NewWriterLevel(&compressed, 6)
-	if _, err := writer.Write(g.feed); err != nil {
-		log.Printf("Error compressing RSS feed: %v", err)
-		return
+	// Also create compressed version
+	compressed, err := utils.Compress(buf.Bytes(), utils.DefaultCompression)
+	if err != nil {
+		return fmt.Errorf("failed to compress rss feed: %w", err)
 	}
-	if err := writer.Close(); err != nil {
-		log.Printf("Error closing RSS compressor: %v", err)
-		return
-	}
+	g.feedBrotli = compressed
 
-	g.feedBrotli = compressed.Bytes()
-
-	log.Printf("Pre-generated RSS feed: %d bytes (uncompressed) -> %d bytes (brotli) [%.1f%% reduction]",
-		len(g.feed),
-		len(g.feedBrotli),
-		100.0*(1.0-float64(len(g.feedBrotli))/float64(len(g.feed))))
+	return nil
 }
 
 func (g *Generator) GetFeed() []byte {

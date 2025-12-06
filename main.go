@@ -17,17 +17,29 @@ import (
 	"jordanmurray.xyz/site/templates"
 )
 
-//go:embed static
-var staticFiles embed.FS
+var (
+	//go:embed static
+	staticFiles embed.FS
 
-//go:embed content
-var contentFiles embed.FS
+	//go:embed content
+	contentFiles embed.FS
+)
+
+type templRenderer struct{}
+
+func (templRenderer) Render(post *models.Post) ([]byte, error) {
+	var buf bytes.Buffer
+	component := templates.Reflection(*post)
+	if err := component.Render(context.Background(), &buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
 
 func main() {
-	// Set up embedded content filesystem
 	cache.Posts.SetContentFS(contentFiles)
+	cache.Posts.SetRenderer(templRenderer{})
 
-	// Set up RSS generator
 	rssBaseURL := os.Getenv("RSS_BASE_URL")
 	if rssBaseURL == "" {
 		rssBaseURL = "https://jordanmurray.xyz"
@@ -39,16 +51,6 @@ func main() {
 	)
 	cache.Posts.SetRSSGenerator(rssGen)
 	handlers.SetRSSGenerator(rssGen)
-
-	// Set up pre-rendering for posts
-	cache.Posts.SetRenderFunc(func(post *models.Post) ([]byte, error) {
-		var buf bytes.Buffer
-		component := templates.Reflection(*post)
-		if err := component.Render(context.Background(), &buf); err != nil {
-			return nil, err
-		}
-		return buf.Bytes(), nil
-	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -48,32 +48,32 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post := cache.Posts.GetPostBySlug(slug)
-	if post == nil {
+	cachedPost := cache.Posts.GetPostBySlug(slug)
+	if cachedPost == nil {
 		http.NotFound(w, r)
 		return
 	}
 
 	// Check if client accepts brotli encoding
 	acceptEncoding := r.Header.Get("Accept-Encoding")
-	if strings.Contains(acceptEncoding, "br") && len(post.RenderedHTMLBrotli) > 0 {
+	if strings.Contains(acceptEncoding, "br") && len(cachedPost.RenderedHTMLBrotli) > 0 {
 		// Serve pre-compressed brotli version
 		w.Header().Set("Content-Encoding", "br")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Vary", "Accept-Encoding")
-		w.Write(post.RenderedHTMLBrotli)
+		w.Write(cachedPost.RenderedHTMLBrotli)
 		return
 	}
 
 	// Serve uncompressed pre-rendered version
-	if len(post.RenderedHTML) > 0 {
+	if len(cachedPost.RenderedHTML) > 0 {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(post.RenderedHTML)
+		w.Write(cachedPost.RenderedHTML)
 		return
 	}
 
 	// Fallback to dynamic rendering (if pre-rendering failed)
-	component := templates.Reflection(*post)
+	component := templates.Reflection(cachedPost.Post)
 	if err := component.Render(r.Context(), w); err != nil {
 		log.Printf("Error rendering reflection: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
