@@ -10,19 +10,15 @@ import (
 )
 
 func writeWithEncoding(w http.ResponseWriter, r *http.Request, data, compressedData []byte, contentType string) {
-	acceptEncoding := r.Header.Get("Accept-Encoding")
+	w.Header().Set("Content-Type", contentType)
 
-	var resp []byte
-	if strings.Contains(acceptEncoding, "br") && len(compressedData) > 0 {
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "br") {
 		w.Header().Set("Content-Encoding", "br")
 		w.Header().Set("Vary", "Accept-Encoding")
-		resp = compressedData
+		w.Write(compressedData)
 	} else {
-		resp = data
+		w.Write(data)
 	}
-
-	w.Header().Set("Content-Type", contentType)
-	w.Write(resp)
 }
 
 func HandleHome(w http.ResponseWriter, r *http.Request) {
