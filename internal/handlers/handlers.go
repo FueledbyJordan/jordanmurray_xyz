@@ -10,6 +10,11 @@ import (
 )
 
 func HandleHome(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -25,6 +30,11 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReflections(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	posts := cache.Posts.GetAllPosts()
 	component := templates.Reflections(posts)
 
@@ -35,6 +45,11 @@ func HandleReflections(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReflection(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	slug := strings.TrimPrefix(r.URL.Path, "/reflections/")
 	if slug == "" {
 		http.Error(w, "reflection id must be set", http.StatusBadRequest)
@@ -62,8 +77,14 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	if len(cache.Posts.RssFeed()) == 0 {
 		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
+		return
 	}
 
 	acceptEncoding := r.Header.Get("Accept-Encoding")
