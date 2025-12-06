@@ -109,10 +109,18 @@ func (g *Generator) Generate(posts []models.Post) error {
 	return nil
 }
 
-func (g *Generator) RssFeed() []byte {
+func (g *Generator) Empty() bool {
+	return len(g.rssFeed) == 0
+}
+
+func (g *Generator) Data() []byte {
 	return g.rssFeed
 }
 
-func (g *Generator) CompressedRssFeed() []byte {
+func (g *Generator) CompressedData() []byte {
 	return g.compressedRssFeed
+}
+
+func (g *Generator) ContentType() string {
+	return "application/rss+xml; charset=utf-8"
 }

@@ -35,3 +35,15 @@ func NewRenderedPost(post models.Post, ctx context.Context) (RenderedPost, error
 		CompressedHTML: compressedHTML,
 	}, nil
 }
+
+func (r RenderedPost) Data() []byte {
+	return r.HTML
+}
+
+func (r RenderedPost) CompressedData() []byte {
+	return r.CompressedHTML
+}
+
+func (r RenderedPost) ContentType() string {
+	return "text/html; charset=utf-8"
+}

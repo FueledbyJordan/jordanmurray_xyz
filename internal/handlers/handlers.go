@@ -9,15 +9,21 @@ import (
 	"jordanmurray.xyz/site/templates"
 )
 
-func writeWithEncoding(w http.ResponseWriter, r *http.Request, data, compressedData []byte, contentType string) {
-	w.Header().Set("Content-Type", contentType)
+type encodedResponse interface {
+	Data() []byte
+	CompressedData() []byte
+	ContentType() string
+}
+
+func writeResponse(w http.ResponseWriter, r *http.Request, resp encodedResponse) {
+	w.Header().Set("Content-Type", resp.ContentType())
 
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "br") {
 		w.Header().Set("Content-Encoding", "br")
 		w.Header().Set("Vary", "Accept-Encoding")
-		w.Write(compressedData)
+		w.Write(resp.CompressedData())
 	} else {
-		w.Write(data)
+		w.Write(resp.Data())
 	}
 }
 
@@ -59,14 +65,14 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeWithEncoding(w, r, cachedPost.HTML, cachedPost.CompressedHTML, "text/html; charset=utf-8")
+	writeResponse(w, r, cachedPost)
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
-	if len(cache.Posts.RssFeed()) == 0 {
+	if cache.Posts.Empty() {
 		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
 		return
 	}
 
-	writeWithEncoding(w, r, cache.Posts.RssFeed(), cache.Posts.CompressedRssFeed(), "application/rss+xml; charset=utf-8")
+	writeResponse(w, r, &cache.Posts.Generator)
 }
