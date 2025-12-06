@@ -26,11 +26,6 @@
         version = "latest";
 
         # Fetch external vendor assets with fixed hashes for reproducibility
-        tailwindJs = pkgs.fetchurl {
-          url = "https://cdn.tailwindcss.com";
-          sha256 = "sha256-F26JRmGqnNyaXLpscgBEy797i9gNHJoUKnwksbbFDRU=";
-        };
-
         daisyuiCss = pkgs.fetchurl {
           url = "https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css";
           sha256 = "sha256-/fJonUuxkkw6K/ReqJCfynXXQVosFIMt2wuR7WFaNtE=";
@@ -95,7 +90,11 @@
           src = ./.;
           vendorHash = null;
 
-          nativeBuildInputs = [ templ pkgs.nodePackages.terser ];
+          nativeBuildInputs = [
+            templ
+            pkgs.nodePackages.terser
+            pkgs.nodePackages.tailwindcss
+          ];
 
           preBuild = ''
             ${templ}/bin/templ generate
@@ -105,14 +104,20 @@
             mkdir -p static/vendor/js
             mkdir -p static/vendor/fonts
 
-            # Copy and minify JavaScript assets
-            echo "Minifying tailwind.js..."
-            ${pkgs.nodePackages.terser}/bin/terser ${tailwindJs} --compress --mangle -o static/vendor/js/tailwind.js
+            # Build Tailwind CSS
+            echo "Building Tailwind CSS..."
+            NODE_PATH=${pkgs.nodePackages.tailwindcss}/lib/node_modules \
+              ${pkgs.nodePackages.tailwindcss}/bin/tailwindcss \
+              -i static/css/tailwind.input.css \
+              -o static/css/tailwind.css \
+              --minify
+
+            # Copy DaisyUI CSS
+            cp ${daisyuiCss} static/vendor/css/daisyui.min.css
+
+            # Minify JavaScript assets
             echo "Minifying datastar.js..."
             ${pkgs.nodePackages.terser}/bin/terser ${datastarJs} --compress --mangle -o static/vendor/js/datastar.js
-
-            # Copy CSS assets (already minified)
-            cp ${daisyuiCss} static/vendor/css/daisyui.min.css
 
             # Copy Hack font files
             cp ${hackFontRegular} static/vendor/fonts/hack-regular.woff2
