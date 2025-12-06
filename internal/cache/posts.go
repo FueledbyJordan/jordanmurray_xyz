@@ -16,11 +16,10 @@ import (
 )
 
 type PostsCache struct {
-	allPosts          []models.Post
-	postBySlug        map[string]renderer.RenderedPost
-	rssFeed           []byte
-	compressedRssFeed []byte
-	inititialized     sync.Once
+	allPosts   []models.Post
+	postBySlug map[string]renderer.RenderedPost
+	rss.Generator
+	inititialized sync.Once
 }
 
 var Posts = &PostsCache{}
@@ -41,12 +40,11 @@ func (c *PostsCache) load(renderedPosts []renderer.RenderedPost, rssConfig rss.C
 	c.allPosts = posts
 	c.postBySlug = slugMap
 
-	generator := rss.New(rssConfig)
-	if err := generator.Generate(c.allPosts); err != nil {
+	rssGenerator := rss.New(rssConfig)
+	if err := rssGenerator.Generate(c.allPosts); err != nil {
 		return fmt.Errorf("failed to generate rss: %w", err)
 	}
-	c.rssFeed = generator.RssFeed()
-	c.compressedRssFeed = generator.CompressedRssFeed()
+	c.Generator = rssGenerator
 
 	return nil
 }
@@ -62,14 +60,6 @@ func (c *PostsCache) GetPostBySlug(slug string) (renderer.RenderedPost, error) {
 	}
 
 	return post, nil
-}
-
-func (c *PostsCache) RssFeed() []byte {
-	return c.rssFeed
-}
-
-func (c *PostsCache) CompressedRssFeed() []byte {
-	return c.compressedRssFeed
 }
 
 func (c *PostsCache) Initialize(fsys embed.FS, rssConfig rss.Config, ctx context.Context) {

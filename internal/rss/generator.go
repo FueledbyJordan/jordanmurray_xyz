@@ -46,8 +46,8 @@ type Generator struct {
 	compressedRssFeed []byte
 }
 
-func New(cfg Config) *Generator {
-	return &Generator{
+func New(cfg Config) Generator {
+	return Generator{
 		Config: cfg,
 	}
 }
