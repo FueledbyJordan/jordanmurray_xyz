@@ -11,7 +11,7 @@ import (
 	"jordanmurray.xyz/site/internal/cache"
 	"jordanmurray.xyz/site/internal/handlers"
 	"jordanmurray.xyz/site/internal/middleware"
-	"jordanmurray.xyz/site/internal/rss"
+	"jordanmurray.xyz/site/internal/models"
 )
 
 var (
@@ -32,7 +32,7 @@ func main() {
 
 	cache.Posts.Initialize(
 		contentFiles,
-		rss.Config{
+		models.RSSConfig{
 			BaseURL:     rssBaseURL,
 			Title:       "jordanmurray.xyz // reflections",
 			Description: "a personal time capsule in a glass box",

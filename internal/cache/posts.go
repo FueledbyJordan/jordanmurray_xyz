@@ -12,19 +12,18 @@ import (
 
 	"jordanmurray.xyz/site/internal/models"
 	"jordanmurray.xyz/site/internal/renderer"
-	"jordanmurray.xyz/site/internal/rss"
 )
 
 type PostsCache struct {
 	allPosts      []models.Post
 	postBySlug    map[string]renderer.RenderedPost
-	rss           rss.RenderedRSS
+	rss           renderer.RenderedRSSFeed
 	inititialized sync.Once
 }
 
 var Posts = &PostsCache{}
 
-func (c *PostsCache) load(renderedPosts []renderer.RenderedPost, rssConfig rss.Config) error {
+func (c *PostsCache) load(renderedPosts []renderer.RenderedPost, rssConfig models.RSSConfig) error {
 	posts := make([]models.Post, len(renderedPosts))
 	slugMap := make(map[string]renderer.RenderedPost)
 
@@ -40,11 +39,17 @@ func (c *PostsCache) load(renderedPosts []renderer.RenderedPost, rssConfig rss.C
 	c.allPosts = posts
 	c.postBySlug = slugMap
 
-	renderedRSS, err := rss.Generate(c.allPosts, rssConfig)
+	rssFeed := models.NewRSSFeed(rssConfig)
+	err := rssFeed.FromPosts(c.allPosts)
 	if err != nil {
 		return fmt.Errorf("failed to generate rss: %w", err)
 	}
-	c.rss = renderedRSS
+
+	renderedRssFeed, err := renderer.NewRenderedRSSFeed(rssFeed)
+	if err != nil {
+		return fmt.Errorf("failed to compress rss: %w", err)
+	}
+	c.rss = renderedRssFeed
 
 	return nil
 }
@@ -62,11 +67,11 @@ func (c *PostsCache) GetPostBySlug(slug string) (renderer.RenderedPost, error) {
 	return post, nil
 }
 
-func (c *PostsCache) GetRSS() rss.RenderedRSS {
+func (c *PostsCache) GetRSS() renderer.RenderedRSSFeed {
 	return c.rss
 }
 
-func (c *PostsCache) Initialize(fsys embed.FS, rssConfig rss.Config, ctx context.Context) {
+func (c *PostsCache) Initialize(fsys embed.FS, rssConfig models.RSSConfig, ctx context.Context) {
 	c.inititialized.Do(func() {
 		entries, err := fs.ReadDir(fsys, "content/reflections")
 		if err != nil {

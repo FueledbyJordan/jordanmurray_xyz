@@ -1,4 +1,4 @@
-package rss
+package models
 
 import (
 	"bytes"
@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"jordanmurray.xyz/site/internal/models"
-	"jordanmurray.xyz/site/internal/utils"
 )
 
 type rss struct {
@@ -34,23 +31,29 @@ type item struct {
 	GUID        string `xml:"guid"`
 }
 
-type Config struct {
+type RSSConfig struct {
 	BaseURL     string
 	Title       string
 	Description string
 }
 
-type RenderedRSS struct {
-	Feed           []byte
-	CompressedFeed []byte
+type RSSFeed struct {
+	RSSConfig
+	Feed []byte
 }
 
-func Generate(posts []models.Post, cfg Config) (RenderedRSS, error) {
+func NewRSSFeed(cfg RSSConfig) RSSFeed {
+	return RSSFeed{
+		RSSConfig: cfg,
+	}
+}
+
+func (r *RSSFeed) FromPosts(posts []Post) error {
 	var items []item
 	var lastBuildDate time.Time
 
 	for _, post := range posts {
-		postPath := strings.Join([]string{cfg.BaseURL, post.Slug}, "/")
+		postPath := strings.Join([]string{r.BaseURL, post.Slug}, "/")
 		items = append(items, item{
 			Title:       post.Title,
 			Link:        postPath,
@@ -71,9 +74,9 @@ func Generate(posts []models.Post, cfg Config) (RenderedRSS, error) {
 	feed := rss{
 		Version: "2.0",
 		Channel: channel{
-			Title:         cfg.Title,
-			Link:          cfg.BaseURL,
-			Description:   cfg.Description,
+			Title:         r.Title,
+			Link:          r.BaseURL,
+			Description:   r.Description,
 			Language:      "en-us",
 			LastBuildDate: lastBuildDate.Format(time.RFC1123Z),
 			Items:         items,
@@ -87,34 +90,14 @@ func Generate(posts []models.Post, cfg Config) (RenderedRSS, error) {
 	encoder.Indent("", "  ")
 
 	if err := encoder.Encode(feed); err != nil {
-		return RenderedRSS{}, fmt.Errorf("failed to encode rss feed: %w", err)
+		return fmt.Errorf("failed to encode rss feed: %w", err)
 	}
 
-	rssFeed := buf.Bytes()
+	r.Feed = buf.Bytes()
 
-	compressed, err := utils.Compress(rssFeed, utils.DefaultCompression)
-	if err != nil {
-		return RenderedRSS{}, fmt.Errorf("failed to compress rss feed: %w", err)
-	}
-
-	return RenderedRSS{
-		Feed:           rssFeed,
-		CompressedFeed: compressed,
-	}, nil
+	return nil
 }
 
-func (r RenderedRSS) Empty() bool {
+func (r RSSFeed) Empty() bool {
 	return len(r.Feed) == 0
-}
-
-func (r RenderedRSS) Data() []byte {
-	return r.Feed
-}
-
-func (r RenderedRSS) CompressedData() []byte {
-	return r.CompressedFeed
-}
-
-func (r RenderedRSS) ContentType() string {
-	return "application/rss+xml; charset=utf-8"
 }
