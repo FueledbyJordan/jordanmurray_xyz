@@ -174,7 +174,11 @@
           jordanmurray-xyz = site;
 
           site-stripped = site.overrideAttrs (oldAttrs: {
+            nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.upx ];
             ldflags = oldAttrs.ldflags ++ [ "-s" "-w" ];
+            postInstall = oldAttrs.postInstall + ''
+              upx --best --lzma $out/bin/site
+            '';
           });
 
           container = dockerTools.buildImage {
