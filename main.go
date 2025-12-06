@@ -10,7 +10,6 @@ import (
 
 	"jordanmurray.xyz/site/internal/cache"
 	"jordanmurray.xyz/site/internal/handlers"
-	"jordanmurray.xyz/site/internal/middleware"
 	"jordanmurray.xyz/site/internal/models"
 )
 
@@ -47,12 +46,12 @@ func main() {
 		panic(err)
 	}
 
-	getOnly := []string{http.MethodGet}
-	http.HandleFunc("/", middleware.MethodFilter(getOnly, handlers.HandleHome))
-	http.HandleFunc("/reflections", middleware.MethodFilter(getOnly, handlers.HandleReflections))
-	http.HandleFunc("/reflections/", middleware.MethodFilter(getOnly, handlers.HandleReflection))
-	http.HandleFunc("/reflections/feed.rss", middleware.MethodFilter([]string{http.MethodGet, http.MethodHead}, handlers.HandleRSS))
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	http.HandleFunc("GET /{$}", handlers.HandleHome)
+	http.HandleFunc("GET /reflections", handlers.HandleReflections)
+	http.HandleFunc("GET /reflections/{slug}", handlers.HandleReflection)
+	http.HandleFunc("GET /reflections/feed.rss", handlers.HandleRSS)
+	http.HandleFunc("HEAD /reflections/feed.rss", handlers.HandleRSS)
+	http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	addr := fmt.Sprintf(":%s", port)
 	if err := http.ListenAndServe(addr, nil); err != nil {

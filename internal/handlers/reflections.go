@@ -3,7 +3,6 @@ package handlers
 import (
 	"log"
 	"net/http"
-	"strings"
 
 	"jordanmurray.xyz/site/internal/cache"
 	"jordanmurray.xyz/site/internal/renderer"
@@ -22,11 +21,7 @@ func HandleReflections(w http.ResponseWriter, r *http.Request) {
 
 func HandleReflection(w http.ResponseWriter, r *http.Request) {
 	withCache(func(w http.ResponseWriter, r *http.Request, c *cache.Cache) {
-		slug := strings.TrimPrefix(r.URL.Path, "/reflections/")
-		if slug == "" {
-			http.Error(w, "reflection id must be set", http.StatusBadRequest)
-			return
-		}
+		slug := r.PathValue("slug")
 
 		cachedPost, err := c.PostBySlug(slug)
 		if err != nil {
