@@ -9,12 +9,23 @@ import (
 	"jordanmurray.xyz/site/templates"
 )
 
-func HandleHome(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+func writeWithEncoding(w http.ResponseWriter, r *http.Request, data, compressedData []byte, contentType string) {
+	acceptEncoding := r.Header.Get("Accept-Encoding")
+
+	var resp []byte
+	if strings.Contains(acceptEncoding, "br") && len(compressedData) > 0 {
+		w.Header().Set("Content-Encoding", "br")
+		w.Header().Set("Vary", "Accept-Encoding")
+		resp = compressedData
+	} else {
+		resp = data
 	}
 
+	w.Header().Set("Content-Type", contentType)
+	w.Write(resp)
+}
+
+func HandleHome(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -30,11 +41,6 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReflections(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	posts := cache.Posts.GetAllPosts()
 	component := templates.Reflections(posts)
 
@@ -45,11 +51,6 @@ func HandleReflections(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReflection(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	slug := strings.TrimPrefix(r.URL.Path, "/reflections/")
 	if slug == "" {
 		http.Error(w, "reflection id must be set", http.StatusBadRequest)
@@ -62,42 +63,14 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp []byte
-	acceptEncoding := r.Header.Get("Accept-Encoding")
-	if strings.Contains(acceptEncoding, "br") {
-		w.Header().Set("Content-Encoding", "br")
-		w.Header().Set("Vary", "Accept-Encoding")
-		resp = cachedPost.CompressedHTML
-	} else {
-		resp = cachedPost.HTML
-	}
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(resp)
+	writeWithEncoding(w, r, cachedPost.HTML, cachedPost.CompressedHTML, "text/html; charset=utf-8")
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	if len(cache.Posts.RssFeed()) == 0 {
 		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
 		return
 	}
 
-	acceptEncoding := r.Header.Get("Accept-Encoding")
-
-	var resp []byte
-	if strings.Contains(acceptEncoding, "br") {
-		resp = cache.Posts.CompressedRssFeed()
-		w.Header().Set("Content-Encoding", "br")
-		w.Header().Set("Vary", "Accept-Encoding")
-	} else {
-		resp = cache.Posts.RssFeed()
-	}
-
-	w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
-	w.Write(resp)
+	writeWithEncoding(w, r, cache.Posts.RssFeed(), cache.Posts.CompressedRssFeed(), "application/rss+xml; charset=utf-8")
 }

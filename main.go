@@ -10,6 +10,7 @@ import (
 
 	"jordanmurray.xyz/site/internal/cache"
 	"jordanmurray.xyz/site/internal/handlers"
+	"jordanmurray.xyz/site/internal/middleware"
 	"jordanmurray.xyz/site/internal/rss"
 )
 
@@ -49,10 +50,11 @@ func main() {
 		panic(err)
 	}
 
-	http.HandleFunc("/", handlers.HandleHome)
-	http.HandleFunc("/reflections", handlers.HandleReflections)
-	http.HandleFunc("/reflections/", handlers.HandleReflection)
-	http.HandleFunc("/reflections/feed.rss", handlers.HandleRSS)
+	getOnly := []string{http.MethodGet}
+	http.HandleFunc("/", middleware.MethodFilter(getOnly, handlers.HandleHome))
+	http.HandleFunc("/reflections", middleware.MethodFilter(getOnly, handlers.HandleReflections))
+	http.HandleFunc("/reflections/", middleware.MethodFilter(getOnly, handlers.HandleReflection))
+	http.HandleFunc("/reflections/feed.rss", middleware.MethodFilter([]string{http.MethodGet, http.MethodHead}, handlers.HandleRSS))
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	addr := fmt.Sprintf(":%s", port)
