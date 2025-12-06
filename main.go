@@ -28,17 +28,14 @@ func main() {
 		rssBaseURL = "https://jordanmurray.xyz"
 	}
 
-	ctx := context.Background()
+	rssConfig := models.RSSConfig{
+		BaseURL:     rssBaseURL,
+		Title:       "jordanmurray.xyz // reflections",
+		Description: "a personal time capsule in a glass box",
+	}
 
-	cache.Posts.Initialize(
-		contentFiles,
-		models.RSSConfig{
-			BaseURL:     rssBaseURL,
-			Title:       "jordanmurray.xyz // reflections",
-			Description: "a personal time capsule in a glass box",
-		},
-		ctx,
-	)
+	ctx := context.Background()
+	cache.Initialize(contentFiles, rssConfig, ctx)
 
 	port := os.Getenv("PORT")
 	if port == "" {

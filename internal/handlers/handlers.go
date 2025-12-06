@@ -16,9 +16,14 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts := cache.Posts.GetAllPosts()
-	component := templates.Home(posts)
+	c, err := cache.Get()
+	if err != nil {
+		log.Printf("cache was nil: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
+	component := templates.Home(c.AllPosts())
 	if err := component.Render(r.Context(), w); err != nil {
 		log.Printf("Error rendering home: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -26,9 +31,14 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleReflections(w http.ResponseWriter, r *http.Request) {
-	posts := cache.Posts.GetAllPosts()
-	component := templates.Reflections(posts)
+	c, err := cache.Get()
+	if err != nil {
+		log.Printf("cache was nil: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
+	component := templates.Reflections(c.AllPosts())
 	if err := component.Render(r.Context(), w); err != nil {
 		log.Printf("Error rendering reflections list: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -42,7 +52,14 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cachedPost, err := cache.Posts.GetPostBySlug(slug)
+	c, err := cache.Get()
+	if err != nil {
+		log.Printf("cache was nil: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	cachedPost, err := c.PostBySlug(slug)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -52,11 +69,17 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
-	rss := cache.Posts.GetRSS()
-	if rss.Empty() {
+	c, err := cache.Get()
+	if err != nil {
+		log.Printf("cache was nil: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if c.RSS().Empty() {
 		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
 		return
 	}
 
-	renderer.Write(w, r, rss)
+	renderer.Write(w, r, c.RSS())
 }
