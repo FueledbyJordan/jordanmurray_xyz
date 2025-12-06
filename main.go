@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"fmt"
@@ -12,9 +11,7 @@ import (
 
 	"jordanmurray.xyz/site/internal/cache"
 	"jordanmurray.xyz/site/internal/handlers"
-	"jordanmurray.xyz/site/internal/models"
 	"jordanmurray.xyz/site/internal/rss"
-	"jordanmurray.xyz/site/templates"
 )
 
 var (
@@ -25,20 +22,13 @@ var (
 	contentFiles embed.FS
 )
 
-type templRenderer struct{}
-
-func (templRenderer) Render(post *models.Post) ([]byte, error) {
-	var buf bytes.Buffer
-	component := templates.Reflection(*post)
-	if err := component.Render(context.Background(), &buf); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
 func main() {
-	cache.Posts.SetContentFS(contentFiles)
-	cache.Posts.SetRenderer(templRenderer{})
+	ctx := context.Background()
+
+	cachedPosts, err := cache.LoadPosts(contentFiles, ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	rssBaseURL := os.Getenv("RSS_BASE_URL")
 	if rssBaseURL == "" {
@@ -50,6 +40,7 @@ func main() {
 		"a personal time capsule in a glass box",
 	)
 	cache.Posts.SetRSSGenerator(rssGen)
+	cache.Posts.Load(cachedPosts)
 	handlers.SetRSSGenerator(rssGen)
 
 	port := os.Getenv("PORT")

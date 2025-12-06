@@ -1,14 +1,15 @@
 package cache
 
 import (
+	"context"
+	"embed"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 	"slices"
-	"strings"
-	"sync"
 
 	"jordanmurray.xyz/site/internal/models"
+	"jordanmurray.xyz/site/internal/renderer"
 	"jordanmurray.xyz/site/internal/rss"
 	"jordanmurray.xyz/site/internal/utils"
 )
@@ -19,84 +20,51 @@ type CachedPost struct {
 	RenderedHTMLBrotli []byte
 }
 
-type Renderer interface {
-	Render(post *models.Post) ([]byte, error)
-}
-
 type PostsCache struct {
 	allPosts     []models.Post
 	postBySlug   map[string]*CachedPost
-	once         sync.Once
-	contentFS    fs.FS
-	renderer     Renderer
 	rssGenerator *rss.Generator
 }
 
 var Posts = &PostsCache{}
 
-func (c *PostsCache) Init() {
-	c.once.Do(func() {
-		if c.contentFS == nil {
-			panic("content filesystem not set")
-		}
+func NewCachedPost(post models.Post, ctx context.Context) (*CachedPost, error) {
+	cachedPost := &CachedPost{Post: post}
+	rendered, err := renderer.PostRenderer{Post: post}.Render(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error rendering post: %w", err)
+	}
 
-		posts := []models.Post{}
-		slugMap := make(map[string]*CachedPost)
+	cachedPost.RenderedHTML = rendered
 
-		entries, err := fs.ReadDir(c.contentFS, "content/reflections")
-		if err != nil {
-			panic(fmt.Errorf("error reading reflections directory: %w", err))
-		}
+	compressed, err := utils.Compress(rendered, utils.DefaultCompression)
+	if err != nil {
+		return nil, fmt.Errorf("error compressing post: %w", err)
+	}
 
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-				continue
-			}
+	cachedPost.RenderedHTMLBrotli = compressed
+	return cachedPost, nil
+}
 
-			path := filepath.Join("content/reflections", entry.Name())
-			post, err := models.LoadPostFromFS(c.contentFS, path)
-			if err != nil {
-				panic(fmt.Errorf("error loading post from %s: %w", path, err))
-			}
+func (c *PostsCache) Load(cachedPosts []*CachedPost) {
+	posts := make([]models.Post, len(cachedPosts))
+	slugMap := make(map[string]*CachedPost)
 
-			posts = append(posts, *post)
+	for i, cp := range cachedPosts {
+		posts[i] = cp.Post
+		slugMap[cp.Slug] = cp
+	}
 
-			cachedPost := &CachedPost{Post: *post}
-			if c.renderer != nil {
-				rendered, err := c.renderer.Render(post)
-				if err != nil {
-					panic(fmt.Errorf("error rendering post %s: %w", post.Slug, err))
-				}
-
-				cachedPost.RenderedHTML = rendered
-
-				compressed, err := utils.Compress(rendered, utils.DefaultCompression)
-				if err != nil {
-					panic(fmt.Errorf("Error compressing post %s: %v", post.Slug, err))
-				}
-
-				cachedPost.RenderedHTMLBrotli = compressed
-			}
-
-			slugMap[post.Slug] = cachedPost
-		}
-
-		slices.SortFunc(posts, func(a, b models.Post) int {
-			return b.PublishedAt.Compare(a.PublishedAt)
-		})
-
-		c.allPosts = posts
-		c.postBySlug = slugMap
-		c.rssGenerator.Generate(c.allPosts)
+	slices.SortFunc(posts, func(a, b models.Post) int {
+		return b.PublishedAt.Compare(a.PublishedAt)
 	})
-}
 
-func (c *PostsCache) SetContentFS(fsys fs.FS) {
-	c.contentFS = fsys
-}
+	c.allPosts = posts
+	c.postBySlug = slugMap
 
-func (c *PostsCache) SetRenderer(r Renderer) {
-	c.renderer = r
+	if c.rssGenerator != nil {
+		c.rssGenerator.Generate(c.allPosts)
+	}
 }
 
 func (c *PostsCache) SetRSSGenerator(gen *rss.Generator) {
@@ -104,11 +72,38 @@ func (c *PostsCache) SetRSSGenerator(gen *rss.Generator) {
 }
 
 func (c *PostsCache) GetAllPosts() []models.Post {
-	c.Init()
 	return c.allPosts
 }
 
 func (c *PostsCache) GetPostBySlug(slug string) *CachedPost {
-	c.Init()
 	return c.postBySlug[slug]
+}
+
+func LoadPosts(fsys embed.FS, ctx context.Context) ([]*CachedPost, error) {
+	entries, err := fs.ReadDir(fsys, "content/reflections")
+	if err != nil {
+		return nil, fmt.Errorf("error reading reflections directory: %w", err)
+	}
+
+	var cachedPosts []*CachedPost
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".md" {
+			continue
+		}
+
+		path := filepath.Join("content/reflections", entry.Name())
+		post, err := models.LoadPostFromFS(fsys, path)
+		if err != nil {
+			return nil, fmt.Errorf("error loading post from %s: %w", path, err)
+		}
+
+		cachedPost, err := NewCachedPost(*post, ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error caching post %s: %w", post.Slug, err)
+		}
+
+		cachedPosts = append(cachedPosts, cachedPost)
+	}
+
+	return cachedPosts, nil
 }
