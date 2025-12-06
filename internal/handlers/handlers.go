@@ -6,15 +6,8 @@ import (
 	"strings"
 
 	"jordanmurray.xyz/site/internal/cache"
-	"jordanmurray.xyz/site/internal/rss"
 	"jordanmurray.xyz/site/templates"
 )
-
-var rssGenerator *rss.Generator
-
-func SetRSSGenerator(gen *rss.Generator) {
-	rssGenerator = gen
-}
 
 func HandleHome(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -54,46 +47,36 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var resp []byte
 	acceptEncoding := r.Header.Get("Accept-Encoding")
 	if strings.Contains(acceptEncoding, "br") {
 		w.Header().Set("Content-Encoding", "br")
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Vary", "Accept-Encoding")
-		w.Write(cachedPost.CompressedHTML)
-		return
+		resp = cachedPost.CompressedHTML
+	} else {
+		resp = cachedPost.HTML
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write(cachedPost.HTML)
+	w.Write(resp)
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
-	if rssGenerator == nil {
-		log.Printf("RSS generator not configured")
+	if len(cache.Posts.RssFeed()) == 0 {
 		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
-		return
 	}
 
 	acceptEncoding := r.Header.Get("Accept-Encoding")
+
+	var resp []byte
 	if strings.Contains(acceptEncoding, "br") {
-		rssFeed := rssGenerator.GetFeedBrotli()
-		if len(rssFeed) > 0 {
-			w.Header().Set("Content-Encoding", "br")
-			w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
-			w.Header().Set("Vary", "Accept-Encoding")
-			w.Write(rssFeed)
-			return
-		}
+		resp = cache.Posts.CompressedRssFeed()
+		w.Header().Set("Content-Encoding", "br")
+		w.Header().Set("Vary", "Accept-Encoding")
+	} else {
+		resp = cache.Posts.RssFeed()
 	}
 
-	rssFeed := rssGenerator.GetFeed()
-	if len(rssFeed) > 0 {
-		w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
-		w.Write(rssFeed)
-		return
-	}
-
-	// If feed wasn't generated, return error
-	log.Printf("RSS feed not available")
-	http.Error(w, "RSS feed not available", http.StatusInternalServerError)
+	w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
+	w.Write(resp)
 }

@@ -26,16 +26,18 @@ func main() {
 	if rssBaseURL == "" {
 		rssBaseURL = "https://jordanmurray.xyz"
 	}
-	rssGen := rss.NewGenerator(
-		rssBaseURL,
-		"jordanmurray.xyz // reflections",
-		"a personal time capsule in a glass box",
-	)
 
 	ctx := context.Background()
 
-	cache.Posts.Initialize(contentFiles, rssGen, ctx)
-	handlers.SetRSSGenerator(rssGen)
+	cache.Posts.Initialize(
+		contentFiles,
+		rss.Config{
+			BaseURL:     rssBaseURL,
+			Title:       "jordanmurray.xyz // reflections",
+			Description: "a personal time capsule in a glass box",
+		},
+		ctx,
+	)
 
 	port := os.Getenv("PORT")
 	if port == "" {

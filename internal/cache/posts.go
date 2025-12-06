@@ -16,15 +16,16 @@ import (
 )
 
 type PostsCache struct {
-	allPosts      []models.Post
-	postBySlug    map[string]renderer.RenderedPost
-	rssGenerator  *rss.Generator
-	inititialized sync.Once
+	allPosts          []models.Post
+	postBySlug        map[string]renderer.RenderedPost
+	rssFeed           []byte
+	compressedRssFeed []byte
+	inititialized     sync.Once
 }
 
 var Posts = &PostsCache{}
 
-func (c *PostsCache) load(renderedPosts []renderer.RenderedPost) {
+func (c *PostsCache) load(renderedPosts []renderer.RenderedPost, rssConfig rss.Config) error {
 	posts := make([]models.Post, len(renderedPosts))
 	slugMap := make(map[string]renderer.RenderedPost)
 
@@ -40,13 +41,14 @@ func (c *PostsCache) load(renderedPosts []renderer.RenderedPost) {
 	c.allPosts = posts
 	c.postBySlug = slugMap
 
-	if c.rssGenerator != nil {
-		c.rssGenerator.Generate(c.allPosts)
+	generator := rss.New(rssConfig)
+	if err := generator.Generate(c.allPosts); err != nil {
+		return fmt.Errorf("failed to generate rss: %w", err)
 	}
-}
+	c.rssFeed = generator.RssFeed()
+	c.compressedRssFeed = generator.CompressedRssFeed()
 
-func (c *PostsCache) SetRSSGenerator(gen *rss.Generator) {
-	c.rssGenerator = gen
+	return nil
 }
 
 func (c *PostsCache) GetAllPosts() []models.Post {
@@ -62,7 +64,15 @@ func (c *PostsCache) GetPostBySlug(slug string) (renderer.RenderedPost, error) {
 	return post, nil
 }
 
-func (c *PostsCache) Initialize(fsys embed.FS, rssGen *rss.Generator, ctx context.Context) {
+func (c *PostsCache) RssFeed() []byte {
+	return c.rssFeed
+}
+
+func (c *PostsCache) CompressedRssFeed() []byte {
+	return c.compressedRssFeed
+}
+
+func (c *PostsCache) Initialize(fsys embed.FS, rssConfig rss.Config, ctx context.Context) {
 	c.inititialized.Do(func() {
 		entries, err := fs.ReadDir(fsys, "content/reflections")
 		if err != nil {
@@ -89,7 +99,8 @@ func (c *PostsCache) Initialize(fsys embed.FS, rssGen *rss.Generator, ctx contex
 			cachedPosts = append(cachedPosts, cachedPost)
 		}
 
-		c.rssGenerator = rssGen
-		c.load(cachedPosts)
+		if err := c.load(cachedPosts, rssConfig); err != nil {
+			panic(fmt.Errorf("error loading cache: %w", err))
+		}
 	})
 }

@@ -11,22 +11,22 @@ import (
 	"jordanmurray.xyz/site/internal/utils"
 )
 
-type RSS struct {
+type rss struct {
 	XMLName xml.Name `xml:"rss"`
 	Version string   `xml:"version,attr"`
-	Channel Channel  `xml:"channel"`
+	Channel channel  `xml:"channel"`
 }
 
-type Channel struct {
+type channel struct {
 	Title         string `xml:"title"`
 	Link          string `xml:"link"`
 	Description   string `xml:"description"`
 	Language      string `xml:"language"`
 	LastBuildDate string `xml:"lastBuildDate"`
-	Items         []Item `xml:"item"`
+	Items         []item `xml:"item"`
 }
 
-type Item struct {
+type item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
@@ -34,29 +34,31 @@ type Item struct {
 	GUID        string `xml:"guid"`
 }
 
-type Generator struct {
-	baseURL        string
-	feed           []byte
-	feedBrotli     []byte
-	title          string
-	description    string
+type Config struct {
+	BaseURL     string
+	Title       string
+	Description string
 }
 
-func NewGenerator(URL, title, description string) *Generator {
+type Generator struct {
+	Config
+	rssFeed           []byte
+	compressedRssFeed []byte
+}
+
+func New(cfg Config) *Generator {
 	return &Generator{
-		baseURL:     URL,
-		title:       title,
-		description: description,
+		Config: cfg,
 	}
 }
 
 func (g *Generator) Generate(posts []models.Post) error {
-	var items []Item
+	var items []item
 	var lastBuildDate time.Time
 
 	for _, post := range posts {
-		postPath := strings.Join([]string{g.baseURL, post.Slug}, "/")
-		items = append(items, Item{
+		postPath := strings.Join([]string{g.BaseURL, post.Slug}, "/")
+		items = append(items, item{
 			Title:       post.Title,
 			Link:        postPath,
 			Description: post.Excerpt,
@@ -73,12 +75,12 @@ func (g *Generator) Generate(posts []models.Post) error {
 		lastBuildDate = time.Now()
 	}
 
-	feed := RSS{
+	feed := rss{
 		Version: "2.0",
-		Channel: Channel{
-			Title:         g.title,
-			Link:          g.baseURL,
-			Description:   g.description,
+		Channel: channel{
+			Title:         g.Title,
+			Link:          g.BaseURL,
+			Description:   g.Description,
 			Language:      "en-us",
 			LastBuildDate: lastBuildDate.Format(time.RFC1123Z),
 			Items:         items,
@@ -95,22 +97,22 @@ func (g *Generator) Generate(posts []models.Post) error {
 		return fmt.Errorf("failed to encode rss feed: %w", err)
 	}
 
-	g.feed = buf.Bytes()
+	rssFeed := buf.Bytes()
+	g.rssFeed = rssFeed
 
-	// Also create compressed version
 	compressed, err := utils.Compress(buf.Bytes(), utils.DefaultCompression)
 	if err != nil {
 		return fmt.Errorf("failed to compress rss feed: %w", err)
 	}
-	g.feedBrotli = compressed
+	g.compressedRssFeed = compressed
 
 	return nil
 }
 
-func (g *Generator) GetFeed() []byte {
-	return g.feed
+func (g *Generator) RssFeed() []byte {
+	return g.rssFeed
 }
 
-func (g *Generator) GetFeedBrotli() []byte {
-	return g.feedBrotli
+func (g *Generator) CompressedRssFeed() []byte {
+	return g.compressedRssFeed
 }
