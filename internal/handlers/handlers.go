@@ -52,10 +52,11 @@ func HandleReflection(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
-	if cache.Posts.Empty() {
+	rss := cache.Posts.GetRSS()
+	if rss.Empty() {
 		http.Error(w, "RSS feed not available", http.StatusInternalServerError)
 		return
 	}
 
-	renderer.Write(w, r, &cache.Posts.Generator)
+	renderer.Write(w, r, rss)
 }
