@@ -3,22 +3,35 @@ package renderer
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"jordanmurray.xyz/site/internal/models"
+	"jordanmurray.xyz/site/internal/utils"
 	"jordanmurray.xyz/site/templates"
 )
 
-type PostRenderer struct {
-	Post models.Post
+type RenderedPost struct {
+	models.Post
+	HTML           []byte
+	CompressedHTML []byte
 }
 
-var _ Renderer = PostRenderer{}
-
-func (p PostRenderer) Render(ctx context.Context) ([]byte, error) {
+func NewRenderedPost(post models.Post, ctx context.Context) (RenderedPost, error) {
 	var buf bytes.Buffer
-	component := templates.Reflection(p.Post)
+	component := templates.Reflection(post)
 	if err := component.Render(ctx, &buf); err != nil {
-		return nil, err
+		return RenderedPost{}, fmt.Errorf("error rendering post: %w", err)
 	}
-	return buf.Bytes(), nil
+
+	renderedHTML := buf.Bytes()
+	compressedHTML, err := utils.Compress(renderedHTML, utils.DefaultCompression)
+	if err != nil {
+		return RenderedPost{}, fmt.Errorf("error compressing post: %w", err)
+	}
+
+	return RenderedPost{
+		Post:           post,
+		HTML:           renderedHTML,
+		CompressedHTML: compressedHTML,
+	}, nil
 }

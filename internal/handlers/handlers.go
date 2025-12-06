@@ -44,40 +44,27 @@ func HandleReflections(w http.ResponseWriter, r *http.Request) {
 func HandleReflection(w http.ResponseWriter, r *http.Request) {
 	slug := strings.TrimPrefix(r.URL.Path, "/reflections/")
 	if slug == "" {
-		http.Redirect(w, r, "/reflections", http.StatusSeeOther)
+		http.Error(w, "reflection id must be set", http.StatusBadRequest)
 		return
 	}
 
-	cachedPost := cache.Posts.GetPostBySlug(slug)
-	if cachedPost == nil {
+	cachedPost, err := cache.Posts.GetPostBySlug(slug)
+	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Check if client accepts brotli encoding
 	acceptEncoding := r.Header.Get("Accept-Encoding")
-	if strings.Contains(acceptEncoding, "br") && len(cachedPost.RenderedHTMLBrotli) > 0 {
-		// Serve pre-compressed brotli version
+	if strings.Contains(acceptEncoding, "br") {
 		w.Header().Set("Content-Encoding", "br")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Vary", "Accept-Encoding")
-		w.Write(cachedPost.RenderedHTMLBrotli)
+		w.Write(cachedPost.CompressedHTML)
 		return
 	}
 
-	// Serve uncompressed pre-rendered version
-	if len(cachedPost.RenderedHTML) > 0 {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(cachedPost.RenderedHTML)
-		return
-	}
-
-	// Fallback to dynamic rendering (if pre-rendering failed)
-	component := templates.Reflection(cachedPost.Post)
-	if err := component.Render(r.Context(), w); err != nil {
-		log.Printf("Error rendering reflection: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(cachedPost.HTML)
 }
 
 func HandleRSS(w http.ResponseWriter, r *http.Request) {
@@ -87,12 +74,10 @@ func HandleRSS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if client accepts brotli encoding
 	acceptEncoding := r.Header.Get("Accept-Encoding")
 	if strings.Contains(acceptEncoding, "br") {
 		rssFeed := rssGenerator.GetFeedBrotli()
 		if len(rssFeed) > 0 {
-			// Serve pre-compressed brotli version
 			w.Header().Set("Content-Encoding", "br")
 			w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")
 			w.Header().Set("Vary", "Accept-Encoding")
@@ -101,7 +86,6 @@ func HandleRSS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Serve uncompressed pre-generated version
 	rssFeed := rssGenerator.GetFeed()
 	if len(rssFeed) > 0 {
 		w.Header().Set("Content-Type", "application/rss+xml; charset=utf-8")

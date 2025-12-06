@@ -80,26 +80,26 @@ func renderMarkdown(markdown []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func LoadPostFromFS(fsys fs.FS, path string) (*Post, error) {
+func LoadPostFromFS(fsys fs.FS, path string) (Post, error) {
 	content, err := fs.ReadFile(fsys, path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+		return Post{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	fm, markdown, err := parseFrontMatter(content)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse front matter: %w", err)
+		return Post{}, fmt.Errorf("failed to parse front matter: %w", err)
 	}
 
 	htmlContent, err := renderMarkdown(markdown)
 	if err != nil {
-		return nil, fmt.Errorf("failed to render markdown: %w", err)
+		return Post{}, fmt.Errorf("failed to render markdown: %w", err)
 	}
 
 	filename := filepath.Base(path)
 	slug := strings.TrimSuffix(filename, filepath.Ext(filename))
 
-	return &Post{
+	return Post{
 		ID: slug,
 		FrontMatter: FrontMatter{
 			Title:       fm.Title,
