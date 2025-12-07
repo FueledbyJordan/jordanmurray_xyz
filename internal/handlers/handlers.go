@@ -7,6 +7,10 @@ import (
 	"jordanmurray.xyz/site/internal/cache"
 )
 
+func HandleHealth(w http.ResponseWriter, r *http.Request) {
+	_, _ = w.Write([]byte("ok"))
+}
+
 func withCache(next func(w http.ResponseWriter, r *http.Request, c *cache.Cache)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := cache.Get()

@@ -52,6 +52,7 @@ func main() {
 	}
 
 	http.HandleFunc("GET /{$}", handlers.HandleHome)
+	http.HandleFunc("GET /health", handlers.HandleHealth)
 	http.HandleFunc("GET /reflections", handlers.HandleReflections)
 	http.HandleFunc("GET /reflections/{slug}", handlers.HandleReflection)
 	http.HandleFunc("GET /reflections/feed.rss", handlers.HandleRSS)
