@@ -20,7 +20,6 @@
         inherit (pkgs)
           lib
           dockerTools
-          buildEnv
           ;
 
         version = "latest";
@@ -151,6 +150,13 @@
             mainProgram = "site";
           };
         };
+
+        site-stripped = site.overrideAttrs (oldAttrs: {
+          ldflags = oldAttrs.ldflags ++ [
+            "-s"
+            "-w"
+          ];
+        });
       in
       {
         devShells.default = pkgs.mkShell {
@@ -173,32 +179,21 @@
 
           jordanmurray-xyz = site;
 
-          site-stripped = site.overrideAttrs (oldAttrs: {
-            nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.upx ];
-            ldflags = oldAttrs.ldflags ++ [ "-s" "-w" ];
-            postInstall = oldAttrs.postInstall + ''
-              upx --best --lzma $out/bin/site
-            '';
-          });
+          inherit site-stripped;
 
           container = dockerTools.buildImage {
             name = "fueledbyjordan/jordanmurray-xyz";
             tag = version;
             created = "now";
 
-            copyToRoot = buildEnv {
+            copyToRoot = pkgs.buildEnv {
               name = "image-root";
-              paths = [
-                self.packages.${system}.site-stripped
-              ];
-              pathsToLink = [
-                "/bin"
-                "/share"
-              ];
+              paths = [ site-stripped ];
+              pathsToLink = [ "/bin" "/share" ];
             };
 
             config = {
-              Cmd = [ "/bin/site" ];
+              Cmd = [ "${lib.getExe site-stripped}" ];
               ExposedPorts = {
                 "9090/tcp" = { };
               };
@@ -206,7 +201,7 @@
                 "PORT=9090"
               ];
               User = "10000:10000";
-              WorkingDir = "/share/site";
+              WorkingDir = "${site-stripped}/share/site";
             };
           };
         };
