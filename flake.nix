@@ -198,7 +198,7 @@
             };
 
             config = {
-              Cmd = [ "${lib.getExe self.packages.${system}.site-stripped}" ];
+              Cmd = [ "/bin/site" ];
               ExposedPorts = {
                 "9090/tcp" = { };
               };
